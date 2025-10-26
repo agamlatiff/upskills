@@ -28,6 +28,7 @@ class Course extends Model
     }
 
     public function benefits(): HasMany
+    
     {
         return $this->hasMany(CourseBenefit::class, "category_id");
     }

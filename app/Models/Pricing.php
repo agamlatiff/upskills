@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\Rules\Exists;
 
 class Pricing extends Model
 {
@@ -19,5 +20,10 @@ class Pricing extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    public function isSubscribeByUser($userId)
+    {
+        return $this->transactions()->where("user_id", $userId)->where("is_paid", true)->where("ended_at", ">=", now())->exists();
     }
 }

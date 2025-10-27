@@ -6,12 +6,23 @@ use App\Filament\Resources\CourseResource\Pages;
 use App\Filament\Resources\CourseResource\RelationManagers;
 use App\Models\Course;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+use function Laravel\Prompts\textarea;
 
 class CourseResource extends Resource
 {
@@ -23,7 +34,22 @@ class CourseResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Fieldset::make("Details")->schema([
+                    TextInput::make("name")->maxLength(255)->required(),
+                    FileUpload::make("thumbnail")->image()->required(),
+                ]),
+
+                Fieldset::make("Additional")->schema([
+                    Repeater::make("benefits")->relationship("benefits")->schema([
+                        TextInput::make("name")->required()
+                    ]),
+                    Textarea::make("about")->required(),
+                    Select::make("is_populer")->options([
+                        true => "Populer",
+                        false => "Not Populer"
+                    ])->required(),
+                    Select::make("category_id")->relationship("category", "name")->searchable()->preload()->required()
+                ])
             ]);
     }
 
@@ -31,7 +57,10 @@ class CourseResource extends Resource
     {
         return $table
             ->columns([
-                //
+                ImageColumn::make("thumbnail"),
+                TextColumn::make("name"),
+                TextColumn::make("category.name"),
+                IconColumn::make("is_populer")->boolean()->trueColor("success")->falseColor("danger")->trueIcon("heroicon-o-check-circle")->falseIcon("heroicon-o-x-circle")->label("Popular")
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

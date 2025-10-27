@@ -30,12 +30,12 @@ class Course extends Model
     public function benefits(): HasMany
     
     {
-        return $this->hasMany(CourseBenefit::class, "category_id");
+        return $this->hasMany(CourseBenefit::class);
     }
 
     public function courseSections(): HasMany
     {
-        return $this->hasMany(CourseSection::class, "category_id");
+        return $this->hasMany(CourseSection::class, "course_id");
     }
 
     public function courseStudents(): HasMany
@@ -45,7 +45,7 @@ class Course extends Model
 
     public function courseMentors(): HasMany
     {
-        return $this->hasMany(CourseMentor::class, "category_id");
+        return $this->hasMany(CourseMentor::class, "course_id");
     }
 
     public function category(): BelongsTo

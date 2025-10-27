@@ -13,4 +13,5 @@ class CourseBenefit extends Model
         "name",
         "course_id"
     ];
+    
 }

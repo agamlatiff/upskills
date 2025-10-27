@@ -22,11 +22,14 @@ class RoleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = "Managements";
+
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                TextInput::make("name")->label("Role Name")->required( )
+                TextInput::make("name")->label("Role Name")->required()
             ]);
     }
 
@@ -34,7 +37,7 @@ class RoleResource extends Resource
     {
         return $table
             ->columns([
-             TextColumn::make("name")->searchable()
+                TextColumn::make("name")->searchable()
             ])
             ->filters([
                 // Tables\Filters\TrashedFilter::make(),

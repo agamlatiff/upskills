@@ -22,12 +22,14 @@ class PricingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    protected static ?string $navigationGroup = "Managements";
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Fieldset::make("Details")->schema([
-                    
+
                     TextInput::make("name")->maxLength(255)->required(),
                     TextInput::make("price")->required()->numeric()->prefix("IDR"),
                     TextInput::make("duration")->required()->numeric()->prefix("Month")

@@ -14,6 +14,7 @@ class Transaction extends Model
         "booking_trx_id",
         "user_id",
         "pricing_id",
+        "grand_total_amount",
         "sub_total_amount",
         "total_tax_amount",
         "is_paid",

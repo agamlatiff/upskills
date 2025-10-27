@@ -6,12 +6,15 @@ use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
 use App\Models\Pricing;
 use App\Models\Transaction;
+use App\Models\User;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
@@ -20,6 +23,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+use function Laravel\Prompts\select;
 
 class TransactionResource extends Resource
 {
@@ -98,9 +103,61 @@ class TransactionResource extends Resource
                                     ->readOnly()
                                     ->required()
                             ])
-
                     ]),
-                ])->columnSpan("full")->columns()->skippable()
+                    Step::make("Customer Informatiion")
+                        ->schema([
+                            Select::make("user_id")
+                                ->relationship("student", "email")
+                                ->searchable()
+                                ->preload()
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $user = User::find($state);
+
+                                    $name = $user->name;
+                                    $email = $user->email;
+
+                                    $set("name", $name);
+                                    $set("email", $email);
+                                })
+                                ->afterStateHydrated(function (callable $set, $state) {
+                                    $userId = $state;
+                                    if ($userId) {
+                                        $user = User::find($userId);
+                                        $name = $user->name;
+                                        $email = $user->email;
+                                        $set("name", $name);
+                                        $set("email", $email);
+                                    }
+                                }),
+                            TextInput::make("name")->required()->readOnly()->maxLength(255),
+                            TextInput::make("email")->required()->readOnly()->maxLength(255)
+                        ]),
+                    Step::make("Payment Information")
+                        ->schema([
+                            ToggleButtons::make("is_paid")
+                                ->label("Is it already paid?")
+                                ->boolean()
+                                ->grouped()
+                                ->icons([
+                                    true => "heroicon-o-pencil",
+                                    false => "heroicon-o-clock",
+                                ])
+                                ->required(),
+                            Select::make("payment_type")
+                            ->options([
+                                "Midtrans" => "Midtrans",
+                                "Manual" => "Manual"
+                            ])
+                            ->required(),
+                            FileUpload::make("proof")
+                            ->image()
+                        ])
+                ])
+                ->columnSpan("full")
+                ->columns()
+                ->skippable()
             ]);
     }
 

@@ -6,9 +6,12 @@ use App\Filament\Resources\PricingResource\Pages;
 use App\Filament\Resources\PricingResource\RelationManagers;
 use App\Models\Pricing;
 use Filament\Forms;
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -23,7 +26,12 @@ class PricingResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Fieldset::make("Details")->schema([
+                    
+                    TextInput::make("name")->maxLength(255)->required(),
+                    TextInput::make("price")->required()->numeric()->prefix("IDR"),
+                    TextInput::make("duration")->required()->numeric()->prefix("Month")
+                ])
             ]);
     }
 
@@ -31,7 +39,9 @@ class PricingResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make("name")->searchable(),
+                TextColumn::make("price"),
+                TextColumn::make("duration")
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

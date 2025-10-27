@@ -4,8 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers;
+use App\Models\Pricing;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Filament\Forms;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Wizard;
+use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -23,7 +31,76 @@ class TransactionResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Wizard::make([
+                    Step::make("Products and Price")->schema([
+                        Grid::make(2)->schema([
+                            Select::make("pricing_id")
+                                ->relationship("pricing", "name")->searchable()
+                                ->preload()
+                                ->required()
+                                ->live()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    $pricing = Pricing::Find($state);
+
+                                    $price = $pricing->price;
+                                    $duration = $pricing->duration;
+
+                                    $subTotal = $price * $state;
+                                    $totalPpn = $subTotal * 0.11;
+                                    $totalAmount = $subTotal + $totalPpn;
+
+                                    $set("total_tax_amount", $totalPpn);
+                                    $set("grand_total_amount", $totalAmount);
+                                    $set("sub_total_amount", $price);
+                                    $set("duration", $duration);
+                                })->afterStateHydrated(function (callable $set, $state) {
+                                    $pricingId = $state;
+                                    if ($pricingId) {
+                                        $pricing = Pricing::find($pricingId);
+                                        $duration = $pricing->duration;
+                                        $set("duration", $duration);
+                                    };
+                                }),
+                            TextInput::make("duration")->required()->numeric()->readOnly()->prefix("Months")
+                        ]),
+                        Grid::make(3)
+                            ->schema([
+                                TextInput::make("sub_total_amount")
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix("IDR")
+                                    ->readOnly(),
+                                TextInput::make("total_tax_amount")
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix("IDR")
+                                    ->readOnly(),
+                                TextInput::make("grand_total_amount")
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix("IDR")
+                                    ->readOnly()
+                                    ->helperText("Price have been include PPN 115")
+                            ]),
+                        Grid::make(2)
+                            ->schema([
+                                DatePicker::make("started_at")
+                                    ->live()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $duration = $get("duration");
+                                        if ($state && $duration) {
+                                            $endedAt = Carbon::parse($state)->addMonth($duration);
+                                            $set("ended_at", $endedAt->format("Y-m-d"));
+                                        }
+                                    })->required(),
+
+                                DatePicker::make("ended_at")
+                                    ->readOnly()
+                                    ->required()
+                            ])
+
+                    ]),
+                ])->columnSpan("full")->columns()->skippable()
             ]);
     }
 

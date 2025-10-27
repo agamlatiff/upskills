@@ -30,10 +30,10 @@ class UserResource extends Resource
             ->schema([
                 TextInput::make("name")->maxLength(255)->required(),
                 TextInput::make("email")->maxLength(255)->email()->required(),
-                TextInput::make("email")->password()->minLength(9)->maxLength(255)->helperText("Minimum 9 characters")->required(),
+                TextInput::make("password")->password()->minLength(9)->maxLength(255)->helperText("Minimum 9 characters")->required(),
                 Select::make("occupation")->options([
                     "Developer" => "Developer",
-                    "Designer" => "Designer Nih bos",
+                    "Designer" => "Designer",
                     "Marketer" => "Marketer",
                     "Cyber Security" => "Cyber Security",
                     "Project Manager" => "Project Manager"

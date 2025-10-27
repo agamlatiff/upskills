@@ -4,11 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SectionContentResource\Pages;
 use App\Filament\Resources\SectionContentResource\RelationManagers;
+use App\Models\CourseSection;
 use App\Models\SectionContent;
 use Filament\Forms;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -23,7 +28,14 @@ class SectionContentResource extends Resource
     {
         return $form
             ->schema([
-                //
+                Select::make("course_section_id")->label("Course Section")->options(function () {
+                    return CourseSection::with("course")->get()->mapWithKeys(function ($section) {
+                        return [$section->id => $section->course ? "{$section->course->name} - {$section->name}" : $section->name];
+                    })->toArray();
+                })->searchable()->required(),
+
+                TextInput::make("name")->required()->maxLength(255),
+                RichEditor::make("content")->columnSpanFull()->required()
             ]);
     }
 
@@ -31,7 +43,9 @@ class SectionContentResource extends Resource
     {
         return $table
             ->columns([
-                //
+                TextColumn::make("name")->sortable()->searchable(),
+                TextColumn::make("courseSection.name")->sortable()->searchable(),
+                TextColumn::make("courseSection.course.name")->sortable()->searchable()
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),

@@ -54,7 +54,7 @@ class CourseService
       $nextSection = $course->courseSections
         ->where("id", ">", $currentSection->id)
         ->sortBy("id")
-        ->first;
+        ->first();
 
       if ($nextContent) {
         $nextContent = $nextSection->sectionContents->sortBy("id")->first();

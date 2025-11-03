@@ -98,6 +98,7 @@ class FrontController extends Controller
         }
 
         return view("front.checkout-success", compact("pricing"));
+        
     }
 
 }

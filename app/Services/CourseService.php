@@ -4,10 +4,18 @@ namespace App\Services;
 
 use App\Models\Course;
 use App\Models\CourseSection;
+use App\Repositories\CourseRepositoryInterface;
 use Illuminate\Support\Facades\Auth;
 
 class CourseService
 {
+
+  public function __construct(protected CourseRepositoryInterface $courseRepository)
+  {
+
+  }
+
+
   public function enrollUser(Course $course)
   {
     $user = Auth::user();
@@ -59,7 +67,7 @@ class CourseService
       if ($nextContent) {
         $nextContent = $nextSection->sectionContents->sortBy("id")->first();
       }
-      
+
       return [
         "course" => $course,
         "currentSection" => $currentSection,
@@ -68,7 +76,20 @@ class CourseService
         "isFinished" => !$nextContent,
       ];
     }
+  }
 
+  public function searchCourses(string $keyword)
+  {
+    return $this->courseRepository->searchByKeyword($keyword);
+  }
+
+  public function getCoursesGroupedByCategory()
+  {
+    $courses = $this->courseRepository->getAllWithCategory();
+
+    return $courses->groupBy(function ($course) {
+      return $course->category->name ?? "Uncategorized";
+    });
   }
 
 

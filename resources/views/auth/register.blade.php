@@ -50,7 +50,7 @@
                 <div class="flex flex-col gap-2">
                     <p>Complete Name</p>
                     <label class="relative group">
-                        <input type="text"
+                        <input type="text" name="name"
                             class="appearance-none outline-none w-full rounded-full border border-obito-grey py-[14px] px-5 pl-12 font-semibold placeholder:font-normal placeholder:text-obito-text-secondary group-focus-within:border-obito-green transition-all duration-300"
                             placeholder="Type your complete name">
                         <img src="{{asset('assets/images/icons/profile.svg') }}"" class=" absolute size-5 flex shrink-0

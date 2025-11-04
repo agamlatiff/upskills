@@ -18,7 +18,7 @@
           <a href="#">Features</a>
         </li>
         <li
-          class="{{ request()->routeIs('') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
+          class="{{ request()->routeIs('front.testimonials') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
           <a href="#">Testimonials</a>
         </li>
       </ul>

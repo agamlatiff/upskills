@@ -17,8 +17,8 @@ class CourseController extends Controller
 
     public function index()
     {
-        $courseByCategory = $this->courseService->getCoursesGroupedByCategory();
-        return view("course.index", compact("coursesByCategory"));
+        $coursesByCategory = $this->courseService->getCoursesGroupedByCategory();
+        return view("courses.index", compact("coursesByCategory"));
     }
 
     public function details(Course $course)

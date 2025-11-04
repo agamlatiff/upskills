@@ -1,30 +1,7 @@
-<!doctype html>
-<html>
+@extends("front.layouts.app")
+@section("title", "UpSkills - Register")
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{asset('output.css')}}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet" />
-    <title>Sign Up - Obito Online Learning Platform</title>
-    <meta name="description"
-        content="Obito is an innovative online learning platform that empowers students and professionals with high-quality, accessible courses.">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/logos/logo-64.png') }}"">
-        <link rel=" apple-touch-icon" href="assets/images/logos/logo-64.png') }}"">
-
-        <!-- Open Graph Meta Tags -->
-        <meta property=" og:title" content="Obito Online Learning Platform - Learn Anytime, Anywhere">
-    <meta property="og:description"
-        content="Obito is an innovative online learning platform that empowers students and professionals with high-quality, accessible courses.">
-    <meta property="og:image" content="https://obito-platform.netlify.app/assets/images/logos/logo-64-big.png') }}"">
-        <meta property=" og:url" content="https://obito-platform.netlify.app">
-    <meta property="og:type" content="website">
-</head>
-
-<body>
+@section("content")
     <x-nav-guest />
     <main class="relative flex flex-1 h-full">
         <section class="flex flex-1 items-center py-5 px-5 pl-[calc(((100%-1280px)/2)+75px)]">
@@ -64,8 +41,8 @@
                         <input type="text" name="occupation"
                             class="appearance-none outline-none w-full rounded-full border border-obito-grey py-[14px] px-5 pl-12 font-semibold placeholder:font-normal placeholder:text-obito-text-secondary group-focus-within:border-obito-green transition-all duration-300"
                             placeholder="Type your occupation">
-                        <img src="{{asset('assets/images/icons/briefcase.svg') }}"" class=" absolute size-5 flex
-                            shrink-0 transform -translate-y-1/2 top-1/2 left-5" alt="icon">
+                        <img src="{{asset('assets/images/icons/briefcase.svg') }}"" class=" absolute size-5 flex shrink-0
+                            transform -translate-y-1/2 top-1/2 left-5" alt="icon">
                     </label>
                     <x-input-error :messages="$errors->get('occupation')" class="mt-2 text-red-500" />
                 </div>
@@ -116,6 +93,4 @@
         </div>
     </main>
     <script src="{{ asset('js/photo-upload.js') }}"></script>
-</body>
-
-</html>
+@endsection

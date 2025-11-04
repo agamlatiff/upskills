@@ -1,4 +1,5 @@
 @extends("front.layouts.app")
+@section("title", "UpSkills - Pricing")
 @section("content")
   <x-nav-guest />
   <main class="flex flex-col flex-1 justify-center">
@@ -49,7 +50,7 @@
                 <h2 class="font-bold text-[22px] leading-[33px]">{{ $package->name }}</h2>
               </div>
               <div class="price">
-                <p class="font-bold text-[32px] leading-[48px]">Rp {{ number_format($package->price, 0, '', '') }}</p>
+                <p class="font-bold text-[32px] leading-[48px]">Rp {{ number_format($package->price, 0, '', '.') }}</p>
                 <p class="mt-[6px] text-obito-text-secondary">{{ $package->duration }} months duration</p>
               </div>
               <hr class="border-obito-grey">

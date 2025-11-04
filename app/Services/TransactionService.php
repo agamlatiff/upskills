@@ -23,7 +23,7 @@ class TransactionService
   public function prepareCheckout(Pricing $pricing)
   {
     $user = Auth::user();
-    $alreadySubscribed = $pricing->isSubscribeByUser($user->id);
+    $alreadySubscribed = $pricing->isSubscribedByUser($user->id);
 
     $tax = 0.11;
     $total_tax_amount = $pricing->price * $tax;

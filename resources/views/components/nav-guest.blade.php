@@ -14,12 +14,12 @@
           <a href="{{ route('front.pricing') }}">Pricing</a>
         </li>
         <li
-          class="{{ request()->routeIs('front.index') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
-          <a href="{{ route('front.index') }}">Features</a>
+          class="{{ request()->routeIs('') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
+          <a href="#">Features</a>
         </li>
         <li
-          class="{{ request()->routeIs('front.index') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
-          <a href="{{ route('front.index') }}">Testimonials</a>
+          class="{{ request()->routeIs('') ? "font-semibold" : '' }} hover:font-semibold transition-all duration-300 ">
+          <a href="#">Testimonials</a>
         </li>
       </ul>
     </div>

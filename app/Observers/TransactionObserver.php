@@ -10,6 +10,7 @@ class TransactionObserver
     
     public function creating($transaction) {
         $transaction->booking_trx_id = TransactionHelper::generateUniqueTrxId();
+    
     }
     
     public function created(Transaction $transaction) : void {

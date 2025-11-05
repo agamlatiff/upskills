@@ -79,7 +79,7 @@ class FrontController extends Controller
                 return response()->json(["error" => "Invalid notitfication data."], 400);
             }
 
-            return response()->json(["status" => "Invalid notification data."], 200);
+            return response()->json(["status" => $transactionStatus], 200);
         } catch (Exception $error) {
             Log::error("Failed to handle midtrans notification:", ["error" => $error->getMessage()]);
 

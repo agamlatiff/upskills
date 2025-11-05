@@ -19,7 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware("role:student")->group(function () {
         Route::get("/dashboard/subscriptions/", [DashboardController::class, "subscriptions"])->name("dashboard.subscriptions");
 
-        Route::get("/dashboard/subscription/{transaction}", [DashboardController::class, "subscription_details"])->name("dashboard.subscription_details");
+        Route::get("/dashboard/subscription/{transaction}", [DashboardController::class, "subscription_details"])->name("dashboard.subscription.details");
 
         Route::get('/dashboard/courses/', [CourseController::class, 'index'])
             ->name('dashboard');

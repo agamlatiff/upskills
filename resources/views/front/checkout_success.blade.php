@@ -94,6 +94,3 @@
 
 @endsection
 
-@push('after-scripts')
-  <script src="{{ asset('js/dropdown-navbar.js') }}"></script>
-@endpush

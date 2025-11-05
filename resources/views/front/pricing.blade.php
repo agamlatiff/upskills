@@ -78,7 +78,7 @@
               </div>
               <hr class="border-obito-grey">
               @if ($user && $package->isSubscribedByUser($user->id))
-                <a href="{{ route("#") }}"
+                <a href="#"
                   class="w-full h-11 rounded-full py-[10px] px-5 gap-[10px] bg-obito-green text-center hover:drop-shadow-effect transition-all duration-300">
                   <span class="font-semibold text-white">You've Subscribed</span>
                 </a>

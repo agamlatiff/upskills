@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
             Route::get("/dashboard/learning/{course:slug}/finished", [CourseController::class, "learning_finished"])->name("dashboard.course.leaning.finished");
         });
 
-        Route::get("/checkout/success", [FrontController::class, "checkout_success"])->name("front.checkout.success");
+        Route::get("/checkout/success", [FrontController::class, "checkoutSuccess"])->name("front.checkout.success");
         Route::get("/checkout/{pricing}", [FrontController::class, "checkout"])->name("front.checkout");
 
         Route::post("/booking/payment/midtrans", [FrontController::class, "paymentStoreMidtrans"])->name("front.payment_store_midtrans");

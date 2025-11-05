@@ -23,8 +23,8 @@ class CourseController extends Controller
 
     public function details(Course $course)
     {
-        $course->load(["category", "benefits", "courseSections.sectionContents"]);
-        return view("course.detals", compact("course"));
+        $course->load(["category", "benefits", "courseSections.sectionContents", "courseMentors.mentor"]);
+        return view("courses.details", compact("course"));
     }
 
     public function join(Course $course)
@@ -32,7 +32,7 @@ class CourseController extends Controller
         $studentName = $this->courseService->enrollUser($course);
         $firstSectionAndContent = $this->courseService->getFirstSectionAndContent($course);
 
-        return view("course.success_joined", array_merge(
+        return view("courses.success_joined", array_merge(
             compact("course", "studentName"),
             $firstSectionAndContent
         ));

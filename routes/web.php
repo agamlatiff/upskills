@@ -35,7 +35,7 @@ Route::middleware('auth')->group(function () {
 
             Route::get("/dashboard/learning/{course:slug}/{courseSection}/{sectionContent}", [CourseController::class, "learning"])->name("dashboard.course.learning");
 
-            Route::get("/dashboard/learning/{course:slug}/finished", [CourseController::class, "learning_finished"])->name("dashboard.course.leaning.finished");
+            Route::get("/dashboard/learning/{course:slug}/finished", [CourseController::class, "learning_finished"])->name("dashboard.course.learning.finished");
         });
 
         Route::get("/checkout/success", [FrontController::class, "checkoutSuccess"])->name("front.checkout.success");

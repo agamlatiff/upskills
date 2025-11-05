@@ -42,7 +42,7 @@ class CourseController extends Controller
     {
         $learningData = $this->courseService->getLearningData($course, $contentSectionId, $sectionContentid);
 
-        return view("course.learning", $learningData);
+        return view("courses.learning", $learningData);
     }
 
     public function learning_finished(Course $course)

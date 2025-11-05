@@ -64,7 +64,7 @@ class CourseService
         ->sortBy("id")
         ->first();
 
-      if ($nextContent) {
+      if ($nextSection) {
         $nextContent = $nextSection->sectionContents->sortBy("id")->first();
       }
 

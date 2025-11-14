@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upskill - Master In-Demand Tech Skills</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      .prose .inline-code {
+        background-color: #334155; /* slate-700 */
+        color: #e2e8f0; /* slate-200 */
+        padding: 0.1em 0.4em;
+        border-radius: 0.25rem;
+        font-size: 0.9em;
+        font-family: 'Courier New', Courier, monospace;
+      }
+      .prose pre {
+          background-color: #1e293b !important; /* slate-800 */
+          border: 1px solid #334155; /* slate-700 */
+          border-radius: 0.5rem;
+          padding: 1rem;
+          white-space: pre-wrap;
+      }
+      .prose pre code {
+        font-family: 'Courier New', Courier, monospace;
+      }
+    </style>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Figtree', 'sans-serif'],
+            },
+            colors: {
+              'brand-blue': {
+                '50': '#eff6ff',
+                '100': '#dbeafe',
+                '200': '#bfdbfe',
+                '300': '#93c5fd',
+                '400': '#60a5fa',
+                '500': '#3b82f6',
+                '600': '#2563eb',
+                '700': '#1d4ed8',
+                '800': '#1e40af',
+                '900': '#1e3a8a',
+                '950': '#172554',
+              },
+              'brand-teal': '#14B8A6',
+              'brand-dark': '#0F172A',
+              'brand-green-dark': '#306461',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.23.1?external=react",
+    "zod": "https://esm.sh/zod@3.23.8",
+    "jspdf": "https://esm.sh/jspdf@2.5.1",
+    "html2canvas": "https://esm.sh/html2canvas@1.4.1",
+    "highlight.js": "https://esm.sh/highlight.js@11.9.0",
+    "@google/genai": "https://esm.sh/@google/genai?bundle",
+    "zustand": "https://esm.sh/zustand@4.5.2?external=react",
+    "zustand/middleware": "https://esm.sh/zustand@4.5.2/middleware",
+    "zustand/": "https://aistudiocdn.com/zustand@^5.0.8/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-dark">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

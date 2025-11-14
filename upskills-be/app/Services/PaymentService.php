@@ -62,16 +62,16 @@ class PaymentService
 
   public function handlePaymentService()
   {
-    $notificaton = $this->midtransService->handleNotification();
+    $notification = $this->midtransService->handleNotification();
 
-    if (in_array($notificaton["transacton_status"], ["capture", "settlement"])) {
+    if (in_array($notification["transacton_status"], ["capture", "settlement"])) {
       // $pricing = Pricing::findOrFail($notificaton["custom_field2"]);
-      $pricing = $this->pricingRepository->findById($notificaton["custom_field2"]);
+      $pricing = $this->pricingRepository->findById($notification["custom_field2"]);
 
-      $this->createTransaction($notificaton, $pricing);
+      $this->createTransaction($notification, $pricing);
     }
 
-    return $notificaton["transaction_status"];
+    return $notification["transaction_status"];
   }
 
   protected function createTransaction(array $notification, Pricing $pricing)
@@ -87,7 +87,7 @@ class PaymentService
       "grand_total_amount" => $notification["gross_amount"],
       "payment_type" => "Midtrans",
       "is_paid" => true,
-      "booking_trx_id" => $notification["order_id"], 
+      "booking_trx_id" => $notification["order_id"],
       "started_at" => $startedAt,
       "ended_at" => $endedAt,
     ];

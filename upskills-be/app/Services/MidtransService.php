@@ -28,7 +28,7 @@ class MidtransService
     }
   }
   
-  publIC function handleNotification(): array {
+  public function handleNotification(): array {
     try {
       $notification = new Notification();
       return [

@@ -8,25 +8,16 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
     return 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%231e293b" width="400" height="300"/%3E%3Ctext fill="%23475569" x="50%25" y="50%25" text-anchor="middle" dy=".3em" font-family="sans-serif" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
   }
 
-  // If it's already a full URL (starts with http:// or https://), normalize and return
+  // If it's already a full URL (starts with http:// or https://), return as-is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    // Normalize localhost/127.0.0.1 URLs to match frontend origin if needed
-    // This helps with CORS and consistency
-    const url = new URL(imagePath);
-    
-    // If it's a localhost URL, ensure it uses the same host as the API
-    if (url.hostname === '127.0.0.1' || url.hostname === 'localhost') {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-      const apiBaseUrl = apiUrl.replace('/api', '');
-      const apiUrlObj = new URL(apiBaseUrl);
-      
-      // Use the same hostname and port as the API
-      url.hostname = apiUrlObj.hostname;
-      url.port = apiUrlObj.port;
-      return url.toString();
-    }
-    
     return imagePath;
+  }
+
+  // If it's a relative path starting with /storage, it's already correct
+  if (imagePath.startsWith('/storage/')) {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+    const baseUrl = apiUrl.replace('/api', '');
+    return `${baseUrl}${imagePath}`;
   }
 
   // If it's a relative path, construct the full URL
@@ -38,7 +29,12 @@ export const getImageUrl = (imagePath: string | null | undefined): string => {
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
   const baseUrl = apiUrl.replace('/api', '');
   
-  // Construct full URL
+  // Construct full URL - backend returns URLs like /storage/photos/xxx.jpg
+  // So we need to handle both cases
+  if (cleanPath.startsWith('storage/')) {
+    return `${baseUrl}/${cleanPath}`;
+  }
+  
   return `${baseUrl}/storage/${cleanPath}`;
 };
 

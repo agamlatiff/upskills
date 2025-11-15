@@ -11,11 +11,12 @@ class CourseRepository implements CourseRepositoryInterface
   {
     return Course::where("name", "like", "%{$keyword}%")
       ->orWhere("about", "like", "%{$keyword}%")
+      ->with(["category", "courseMentors.mentor"])
       ->get();
   }
 
   public function getAllWithCategory(): Collection
   {
-    return Course::with("category")->latest()->get();
+    return Course::with(["category", "courseMentors.mentor"])->latest()->get();
   }
 }

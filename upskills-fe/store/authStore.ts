@@ -156,10 +156,15 @@ const useAuthStore = create<AuthState>()(
           return;
         }
 
-        // Don't check auth if we're on auth pages
+        // Don't check auth if we're on auth pages or public routes
         const currentPath = window.location.pathname;
         const authRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email'];
-        if (authRoutes.includes(currentPath)) {
+        const publicRoutes = ['/', '/features', '/pricing', '/testimonials'];
+        
+        // Check if current path is a public route (including dynamic routes like /courses/:slug)
+        const isPublicRoute = publicRoutes.includes(currentPath) || currentPath.startsWith('/courses');
+        
+        if (authRoutes.includes(currentPath) || isPublicRoute) {
           set({ isLoading: false });
           return;
         }
@@ -175,10 +180,12 @@ const useAuthStore = create<AuthState>()(
           });
         } catch (error: any) {
           // Token is invalid or expired, clear auth state silently
-          // Don't show error if we're on auth pages
+          // Don't show error if we're on auth pages or public routes
           const isAuthRoute = authRoutes.includes(window.location.pathname);
-          if (error.response?.status === 401 && !isAuthRoute) {
-            // Only clear silently, interceptor will handle the redirect
+          const isPublic = publicRoutes.includes(window.location.pathname) || window.location.pathname.startsWith('/courses');
+          
+          if (error.response?.status === 401 && !isAuthRoute && !isPublic) {
+            // Only clear silently, interceptor will handle the redirect for protected routes
             localStorage.removeItem('auth_token');
           }
           set({

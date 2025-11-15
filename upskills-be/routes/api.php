@@ -12,12 +12,20 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FrontController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
 Route::get('/front', [FrontController::class, 'index'])->name('api.front.index');
 Route::get('/pricing', [FrontController::class, 'pricing'])->name('api.pricing');
+Route::get('/testimonials', [TestimonialController::class, 'index'])->name('api.testimonials.index');
+
+// Public course routes (no authentication required)
+Route::get('/courses', [CourseController::class, 'index'])->name('api.courses.index');
+Route::get('/courses/{course:slug}', [CourseController::class, 'details'])->name('api.courses.details');
+Route::get('/courses/search', [CourseController::class, 'search_courses'])->name('api.courses.search');
 
 // Payment notification (public webhook)
 Route::match(['get', 'post'], '/payment/midtrans/notification', [FrontController::class, 'paymentMidtransNotification'])
@@ -64,6 +72,16 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');
+    
+    // Testimonials
+    Route::post('/testimonials', [TestimonialController::class, 'store'])->name('api.testimonials.store');
+    Route::put('/testimonials/{testimonial}', [TestimonialController::class, 'update'])->name('api.testimonials.update');
+    Route::delete('/testimonials/{testimonial}', [TestimonialController::class, 'destroy'])->name('api.testimonials.destroy');
+    
+    // Wishlist
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('api.wishlist.index');
+    Route::post('/wishlist', [WishlistController::class, 'store'])->name('api.wishlist.store');
+    Route::delete('/wishlist/{course}', [WishlistController::class, 'destroy'])->name('api.wishlist.destroy');
     
     // Student routes
     Route::middleware('role:student')->group(function () {

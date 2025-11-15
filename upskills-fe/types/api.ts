@@ -33,7 +33,8 @@ export interface CourseCategory {
 
 export interface CourseBenefit {
   id: number;
-  benefit: string;
+  name: string;
+  benefit?: string; // Legacy field for backward compatibility
 }
 
 export interface SectionContent {
@@ -55,6 +56,8 @@ export interface CourseMentor {
   mentor?: {
     id: number;
     name: string;
+    photo?: string;
+    occupation?: string;
   };
 }
 
@@ -65,7 +68,11 @@ export interface Course {
   thumbnail?: string;
   about?: string;
   is_populer: boolean;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  is_free?: boolean;
   content_count?: number;
+  rating?: number | null;
+  rating_count?: number;
   category?: CourseCategory;
   benefits?: CourseBenefit[];
   course_sections?: CourseSection[];
@@ -148,6 +155,36 @@ export interface LearningData {
     name: string;
   } | null;
   is_finished: boolean;
+}
+
+// Testimonial Types
+export interface Testimonial {
+  id: number;
+  quote: string;
+  rating?: number;
+  outcome?: string;
+  is_verified: boolean;
+  user?: {
+    id: number;
+    name: string;
+    photo?: string;
+    occupation?: string;
+  };
+  course?: {
+    id: number;
+    name: string;
+    slug: string;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+// Wishlist Types
+export interface WishlistItem {
+  id: number;
+  course: Course;
+  created_at: string;
+  updated_at: string;
 }
 
 // Error Types

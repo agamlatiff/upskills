@@ -3,29 +3,42 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useSearchCourses } from '../../hooks/useCourses';
 import { CourseCard } from '../../components/CourseCard';
 import { SearchIcon, SparklesIcon } from '../../components/Icons';
-import ProtectedRoute from '../../components/ProtectedRoute';
 import { Course as ApiCourse } from '../../types/api';
+import { getCourseThumbnailUrl, getProfilePhotoUrl } from '../../utils/imageUrl';
 
 // Helper function to convert API Course to frontend Course format
 const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
+  // Map API difficulty to frontend format
+  const difficultyMap: Record<string, string> = {
+    'beginner': 'Beginner',
+    'intermediate': 'Intermediate',
+    'advanced': 'Advanced',
+  };
+  
+  const difficulty = apiCourse.difficulty 
+    ? difficultyMap[apiCourse.difficulty] || 'All Levels'
+    : 'All Levels';
+
   return {
     id: apiCourse.id,
     slug: apiCourse.slug,
     title: apiCourse.name,
-    image: apiCourse.thumbnail || '/placeholder-course.jpg',
+    image: getCourseThumbnailUrl(apiCourse.thumbnail),
     shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
     category: apiCourse.category?.name || 'Uncategorized',
-    difficulty: 'All Levels', // Default since API doesn't provide this
+    difficulty: difficulty,
     duration: `${apiCourse.content_count || 0} lessons`,
-    rating: 4.8, // Default rating
-    students: 0, // Not provided by API
+    rating: apiCourse.rating || 0,
+    students: apiCourse.rating_count || 0,
     price: 0, // Not provided by API
-    isFree: false, // Not provided by API
+    isFree: apiCourse.is_free || false,
     popular: apiCourse.is_populer || false,
     longDescription: apiCourse.about || '',
     instructor: {
       name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
-      avatar: '/placeholder-avatar.jpg',
+      avatar: apiCourse.course_mentors?.[0]?.mentor?.photo 
+        ? getProfilePhotoUrl(apiCourse.course_mentors[0].mentor.photo)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`,
     },
   };
 };
@@ -47,7 +60,7 @@ const CourseSearch: React.FC = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       searchCourses(searchTerm.trim());
-      navigate(`/dashboard/search/courses?q=${encodeURIComponent(searchTerm.trim())}`, { replace: true });
+      navigate(`/courses/search?q=${encodeURIComponent(searchTerm.trim())}`, { replace: true });
     }
   };
 
@@ -160,7 +173,7 @@ const CourseSearch: React.FC = () => {
                     We couldn't find any courses matching "{searchTerm}". Try different keywords or browse all courses.
                   </p>
                   <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/courses')}
                     className="px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Browse All Courses
@@ -185,11 +198,5 @@ const CourseSearch: React.FC = () => {
   );
 };
 
-const CourseSearchWithProtection: React.FC = () => (
-  <ProtectedRoute>
-    <CourseSearch />
-  </ProtectedRoute>
-);
-
-export default CourseSearchWithProtection;
+export default CourseSearch;
 

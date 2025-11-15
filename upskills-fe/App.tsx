@@ -48,13 +48,17 @@ const App: React.FC = () => {
   const { checkAuth, isAuthenticated } = useAuth();
   const { toasts, removeToast } = useToastStore();
 
-  // Check authentication status on app mount (only if not on auth pages)
+  // Check authentication status on app mount (only if not on auth pages or public routes)
   useEffect(() => {
     const currentPath = window.location.pathname;
     const authRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email'];
+    const publicRoutes = ['/', '/features', '/pricing', '/testimonials'];
     
-    // Only check auth if not on auth pages
-    if (!authRoutes.includes(currentPath)) {
+    // Check if current path is a public route (including dynamic routes like /courses/:slug)
+    const isPublicRoute = publicRoutes.includes(currentPath) || currentPath.startsWith('/courses');
+    
+    // Only check auth if not on auth pages or public routes
+    if (!authRoutes.includes(currentPath) && !isPublicRoute) {
       checkAuth();
     }
   }, [checkAuth]);
@@ -83,7 +87,7 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/dashboard/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
             <Route path="/dashboard/subscription/:id" element={<ProtectedRoute><SubscriptionDetails /></ProtectedRoute>} />
-            <Route path="/dashboard/search/courses" element={<ProtectedRoute><CourseSearch /></ProtectedRoute>} />
+            <Route path="/courses/search" element={<CourseSearch />} />
             <Route path="/courses/:courseSlug/learn/:sectionId/:contentId" element={<ProtectedRoute><StartLearning /></ProtectedRoute>} />
             <Route path="/courses/:courseSlug/completed" element={<ProtectedRoute><CourseComplete /></ProtectedRoute>} />
             <Route path="/checkout/:pricingId" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />

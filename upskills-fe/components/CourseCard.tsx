@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpenIcon, ChartBarIcon, StarIcon, HeartIcon } from './Icons';
-import useWishlistStore from '../store/wishlistStore';
+import { useWishlist } from '../hooks/useWishlist';
+import { getProfilePhotoUrl } from '../utils/imageUrl';
 import type { Course } from '../types';
 
 interface CourseCardProps {
@@ -9,13 +10,27 @@ interface CourseCardProps {
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
-    const { isWishlisted, toggleWishlist } = useWishlistStore();
+    const { isWishlisted, toggleWishlist } = useWishlist();
     const wishlisted = isWishlisted(course.id);
 
-    const handleWishlistClick = (e: React.MouseEvent) => {
+    const handleWishlistClick = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleWishlist(course.id);
+        await toggleWishlist(course.id);
+    };
+
+    // Get difficulty badge color
+    const getDifficultyColor = (difficulty: string) => {
+        switch (difficulty.toLowerCase()) {
+            case 'beginner':
+                return 'bg-green-600 text-white';
+            case 'intermediate':
+                return 'bg-yellow-500 text-yellow-900';
+            case 'advanced':
+                return 'bg-red-600 text-white';
+            default:
+                return 'bg-blue-600 text-white';
+        }
     };
 
     return (
@@ -56,7 +71,15 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                         {/* Instructor */}
                         {course.instructor && (
                             <div className="col-span-2 flex items-center gap-3">
-                                <img src={course.instructor?.avatar || '/placeholder-avatar.jpg'} alt={course.instructor?.name || 'Instructor'} className="h-8 w-8 rounded-full object-cover" />
+                                <img 
+                                    src={course.instructor?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(course.instructor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`} 
+                                    alt={course.instructor?.name || 'Instructor'} 
+                                    className="h-8 w-8 rounded-full object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(course.instructor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`;
+                                    }}
+                                />
                                 <span className="font-medium text-slate-300 truncate">{course.instructor?.name || 'Instructor'}</span>
                             </div>
                         )}
@@ -70,15 +93,19 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                         {/* Difficulty */}
                         <div className="flex items-center gap-2 text-slate-400">
                             <ChartBarIcon className="h-5 w-5 text-blue-400" />
-                            <span>{course.difficulty}</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getDifficultyColor(course.difficulty)}`}>
+                                {course.difficulty}
+                            </span>
                         </div>
                         
                         {/* Rating */}
-                        <div className="col-span-2 flex items-center gap-2">
-                             <StarIcon className="h-5 w-5 text-yellow-400" />
-                            <span className="font-bold text-white">{course.rating}</span>
-                            <span className="text-slate-500">({(course.students ?? 0).toLocaleString()})</span>
-                        </div>
+                        {course.rating > 0 && (
+                            <div className="col-span-2 flex items-center gap-2">
+                                <StarIcon className="h-5 w-5 text-yellow-400" />
+                                <span className="font-bold text-white">{course.rating.toFixed(1)}</span>
+                                <span className="text-slate-500">({(course.students ?? 0).toLocaleString()})</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

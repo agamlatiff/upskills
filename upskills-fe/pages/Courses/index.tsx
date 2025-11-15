@@ -3,10 +3,21 @@ import { SearchIcon, StarIcon, SparklesIcon, ChevronLeftIcon, ChevronRightIcon }
 import { useCourses } from '../../hooks/useCourses';
 import { CourseCard } from '../../components/CourseCard';
 import { Course as ApiCourse } from '../../types/api';
-import { getCourseThumbnailUrl } from '../../utils/imageUrl';
+import { getCourseThumbnailUrl, getProfilePhotoUrl } from '../../utils/imageUrl';
 
 // Helper function to convert API Course to frontend Course format
 const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
+  // Map API difficulty to frontend format
+  const difficultyMap: Record<string, string> = {
+    'beginner': 'Beginner',
+    'intermediate': 'Intermediate',
+    'advanced': 'Advanced',
+  };
+  
+  const difficulty = apiCourse.difficulty 
+    ? difficultyMap[apiCourse.difficulty] || 'All Levels'
+    : 'All Levels';
+
   return {
     id: apiCourse.id,
     slug: apiCourse.slug,
@@ -14,17 +25,19 @@ const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
     image: getCourseThumbnailUrl(apiCourse.thumbnail),
     shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
     category: apiCourse.category?.name || 'Uncategorized',
-    difficulty: 'All Levels', // Default since API doesn't provide this
+    difficulty: difficulty,
     duration: `${apiCourse.content_count || 0} lessons`,
-    rating: 4.8, // Default rating
-    students: 0, // Not provided by API
+    rating: apiCourse.rating || 0,
+    students: apiCourse.rating_count || 0,
     price: 0, // Not provided by API
-    isFree: false, // Not provided by API
+    isFree: apiCourse.is_free || false,
     popular: apiCourse.is_populer || false,
     longDescription: apiCourse.about || '',
     instructor: {
       name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
-      avatar: '/placeholder-avatar.jpg',
+      avatar: apiCourse.course_mentors?.[0]?.mentor?.photo 
+        ? getProfilePhotoUrl(apiCourse.course_mentors[0].mentor.photo)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`,
     },
   };
 };
@@ -154,9 +167,22 @@ const Courses: React.FC = () => {
         return (
             <main className="py-16 sm:py-20 lg:py-24 bg-slate-900 min-h-screen">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h2 className="text-2xl font-bold text-white mb-4">Error Loading Courses</h2>
-                        <p className="text-red-400 mb-6">{error}</p>
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center max-w-md">
+                            <div className="mb-6">
+                                <svg className="h-16 w-16 text-slate-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-4">Oops! Something went wrong</h2>
+                            <p className="text-slate-400 mb-6">{error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors"
+                            >
+                                Try Again
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>

@@ -11,10 +11,16 @@ export const useCourses = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<CoursesByCategory[]>('/dashboard/courses');
+      const response = await apiClient.get<CoursesByCategory[]>('/courses');
       setCourses(response.data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch courses');
+      // Show user-friendly error message
+      const errorMessage = err.response?.data?.message || '';
+      if (errorMessage.includes('SQLSTATE') || errorMessage.includes('SQL:') || errorMessage.includes("doesn't exist")) {
+        setError('Unable to load courses at the moment. Please try again later.');
+      } else {
+        setError(errorMessage || 'Unable to load courses. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -41,12 +47,18 @@ export const useCourse = (slug: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.get<{ data: Course } | Course>(`/dashboard/courses/${slug}`);
+      const response = await apiClient.get<{ data: Course } | Course>(`/courses/${slug}`);
       // Handle both wrapped and unwrapped responses
       const data = (response.data as any)?.data || response.data;
       setCourse(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch course');
+      // Show user-friendly error message
+      const errorMessage = err.response?.data?.message || '';
+      if (errorMessage.includes('SQLSTATE') || errorMessage.includes('SQL:') || errorMessage.includes("doesn't exist")) {
+        setError('Unable to load course details. Please try again later.');
+      } else {
+        setError(errorMessage || 'Unable to load course. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -81,7 +93,7 @@ export const useSearchCourses = () => {
     setError(null);
     try {
       const response = await apiClient.get<{ keyword: string; courses: Course[] }>(
-        '/dashboard/search/courses',
+        '/courses/search',
         { params: { search: keyword } }
       );
       // Handle both wrapped and unwrapped responses
@@ -91,7 +103,13 @@ export const useSearchCourses = () => {
         : (data as any)?.data?.courses || [];
       setCourses(coursesData);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to search courses');
+      // Show user-friendly error message
+      const errorMessage = err.response?.data?.message || '';
+      if (errorMessage.includes('SQLSTATE') || errorMessage.includes('SQL:') || errorMessage.includes("doesn't exist")) {
+        setError('Unable to search courses at the moment. Please try again later.');
+      } else {
+        setError(errorMessage || 'Unable to search courses. Please try again.');
+      }
       setCourses([]);
     } finally {
       setLoading(false);

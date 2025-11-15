@@ -69,12 +69,34 @@ apiClient.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
+      // List of public routes where we should NOT redirect on 401
+      const publicRoutes = [
+        "/",
+        "/signin",
+        "/signup",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+        "/features",
+        "/pricing",
+        "/testimonials",
+        "/courses",
+      ];
+      
+      // Check if current path is a public route (including dynamic routes like /courses/:slug)
+      const isPublicRoute = publicRoutes.some(route => {
+        if (route === "/") {
+          return currentPath === "/";
+        }
+        return currentPath.startsWith(route);
+      });
+
       // Clear auth data
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user");
 
-      // Only show toast and redirect if not already on an auth page
-      if (!isAuthRoute) {
+      // Only show toast and redirect if not on a public route or auth page
+      if (!isAuthRoute && !isPublicRoute) {
         toast.error("Your session has expired. Please log in again.");
         // Use React Router navigation instead of window.location for better UX
         if (currentPath !== "/signin") {
@@ -90,21 +112,38 @@ apiClient.interceptors.response.use(
 
     // Handle 500 Server errors
     if (error.response?.status === 500) {
-      toast.error("Server error. Please try again later.");
+      // Log technical error to console for debugging
       console.error("Server error:", error.response.data);
+      toast.error("Something went wrong on our end. Please try again in a moment.");
     }
 
     // Handle 404 Not Found
     if (error.response?.status === 404) {
-      toast.error("Resource not found.");
+      toast.error("The page or resource you're looking for doesn't exist.");
     }
 
     // Handle network errors
     if (!error.response) {
-      toast.error("Network error. Please check your connection.");
+      toast.error("Unable to connect. Please check your internet connection.");
     }
 
-    // Handle other errors
+    // Handle database/SQL errors - show user-friendly message
+    const errorData = error.response?.data as any;
+    const errorMessage = errorData?.message || "";
+    
+    // Check for SQL/database errors and replace with friendly message
+    if (
+      errorMessage.includes("SQLSTATE") ||
+      errorMessage.includes("Base table or view not found") ||
+      errorMessage.includes("doesn't exist") ||
+      errorMessage.includes("SQL:")
+    ) {
+      console.error("Database error:", errorMessage);
+      toast.error("We're experiencing some technical difficulties. Please try again later.");
+      return Promise.reject(error);
+    }
+
+    // Handle other errors with user-friendly messages
     if (
       error.response?.status &&
       error.response.status >= 400 &&
@@ -113,9 +152,15 @@ apiClient.interceptors.response.use(
       error.response.status !== 404 &&
       error.response.status !== 500
     ) {
-      const message =
-        (error.response.data as any)?.message || "An error occurred";
-      toast.error(message);
+      // Extract user-friendly message or provide default
+      let friendlyMessage = "An unexpected error occurred. Please try again.";
+      
+      if (errorMessage && !errorMessage.includes("SQLSTATE") && !errorMessage.includes("SQL:")) {
+        // Use the message if it's not a technical SQL error
+        friendlyMessage = errorMessage;
+      }
+      
+      toast.error(friendlyMessage);
     }
 
     return Promise.reject(error);

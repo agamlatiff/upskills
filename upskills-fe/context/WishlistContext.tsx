@@ -1,57 +1,92 @@
 import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
-
-const WISHLIST_KEY = 'upskill-wishlist';
+import apiClient from '../utils/api';
+import { WishlistItem } from '../types/api';
 
 interface WishlistContextType {
     wishlist: number[];
+    wishlistItems: WishlistItem[];
+    loading: boolean;
     toggleWishlist: (courseId: number) => void;
     isWishlisted: (courseId: number) => boolean;
+    refreshWishlist: () => Promise<void>;
 }
-
-const getWishlistFromStorage = (): number[] => {
-    try {
-        const item = window.localStorage.getItem(WISHLIST_KEY);
-        return item ? JSON.parse(item) : [];
-    } catch (error) {
-        console.error("Error reading wishlist from localStorage", error);
-        return [];
-    }
-};
 
 export const WishlistContext = createContext<WishlistContextType>({
     wishlist: [],
+    wishlistItems: [],
+    loading: false,
     toggleWishlist: () => {},
     isWishlisted: () => false,
+    refreshWishlist: async () => {},
 });
 
 export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [wishlist, setWishlist] = useState<number[]>(getWishlistFromStorage);
+    const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        try {
-            window.localStorage.setItem(WISHLIST_KEY, JSON.stringify(wishlist));
-        } catch (error) {
-            console.error("Error writing wishlist to localStorage", error);
+    const fetchWishlist = useCallback(async () => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            setWishlistItems([]);
+            return;
         }
-    }, [wishlist]);
 
-    const toggleWishlist = useCallback((courseId: number) => {
-        setWishlist(prevWishlist =>
-            prevWishlist.includes(courseId)
-                ? prevWishlist.filter(id => id !== courseId)
-                : [...prevWishlist, courseId]
-        );
+        try {
+            setLoading(true);
+            const response = await apiClient.get<WishlistItem[]>('/wishlist');
+            setWishlistItems(response.data);
+        } catch (error) {
+            console.error('Error fetching wishlist:', error);
+            setWishlistItems([]);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
+    useEffect(() => {
+        fetchWishlist();
+    }, [fetchWishlist]);
+
+    const toggleWishlist = useCallback(async (courseId: number) => {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            return;
+        }
+
+        const isCurrentlyWishlisted = wishlistItems.some(item => item.course.id === courseId);
+
+        try {
+            if (isCurrentlyWishlisted) {
+                // Remove from wishlist
+                await apiClient.delete(`/wishlist/${courseId}`);
+                setWishlistItems(prev => prev.filter(item => item.course.id !== courseId));
+            } else {
+                // Add to wishlist
+                const response = await apiClient.post<WishlistItem>('/wishlist', { course_id: courseId });
+                setWishlistItems(prev => [...prev, response.data]);
+            }
+        } catch (error) {
+            console.error('Error toggling wishlist:', error);
+            // Optionally show error toast here
+        }
+    }, [wishlistItems]);
+
     const isWishlisted = useCallback((courseId: number) => {
-        return wishlist.includes(courseId);
-    }, [wishlist]);
+        return wishlistItems.some(item => item.course.id === courseId);
+    }, [wishlistItems]);
+
+    const wishlist = useMemo(() => {
+        return wishlistItems.map(item => item.course.id);
+    }, [wishlistItems]);
 
     const contextValue = useMemo(() => ({
         wishlist,
+        wishlistItems,
+        loading,
         toggleWishlist,
         isWishlisted,
-    }), [wishlist, toggleWishlist, isWishlisted]);
+        refreshWishlist: fetchWishlist,
+    }), [wishlist, wishlistItems, loading, toggleWishlist, isWishlisted, fetchWishlist]);
 
     return (
         <WishlistContext.Provider value={contextValue}>

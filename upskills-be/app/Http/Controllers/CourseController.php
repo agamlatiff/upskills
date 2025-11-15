@@ -89,7 +89,7 @@ class CourseController extends Controller
             "search" => "required|string"
         ]);
 
-        $keyword = $request->search;
+        $keyword = $request->input('search');
         $courses = $this->courseService->searchCourses($keyword);
 
         return response()->json([

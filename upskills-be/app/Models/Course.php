@@ -18,7 +18,9 @@ class Course extends Model
         "thumbnail",
         "about",
         "is_populer",
-        "category_id"
+        "category_id",
+        "difficulty",
+        "is_free"
     ];
 
     public function setNameAttribute($value): void

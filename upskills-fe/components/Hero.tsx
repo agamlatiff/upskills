@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { PlayIcon, CrownIcon, StarIcon } from './Icons';
 import { UserAvatar } from './hero/UserAvatar';
 import { RoadmapCard } from './hero/RoadmapCard';
@@ -24,13 +25,13 @@ const Hero: React.FC = () => {
               Dive into comprehensive learning paths designed by industry experts. Build real-world projects and get the guidance you need to land your dream job.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-              <a href="#" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">
+              <Link to="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">
                 Get Started
-              </a>
-              <a href="#" className="inline-flex items-center justify-center px-8 py-3 bg-slate-800 text-slate-200 font-semibold rounded-full shadow-md ring-1 ring-slate-700 hover:bg-slate-700 transition-transform hover:scale-105 duration-300">
+              </Link>
+              <Link to="/#learning-paths" className="inline-flex items-center justify-center px-8 py-3 bg-slate-800 text-slate-200 font-semibold rounded-full shadow-md ring-1 ring-slate-700 hover:bg-slate-700 transition-transform hover:scale-105 duration-300">
                 <PlayIcon className="h-6 w-6 mr-2 text-blue-500" />
                 How It Works
-              </a>
+              </Link>
             </div>
             <div className="mt-12 flex items-center justify-center lg:justify-start">
               <div className="flex -space-x-2">

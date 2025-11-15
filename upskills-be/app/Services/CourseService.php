@@ -67,15 +67,15 @@ class CourseService
       if ($nextSection) {
         $nextContent = $nextSection->sectionContents->sortBy("id")->first();
       }
-
-      return [
-        "course" => $course,
-        "currentSection" => $currentSection,
-        "currentContent" => $currentContent,
-        "nextContent" => $nextContent,
-        "isFinished" => !$nextContent,
-      ];
     }
+
+    return [
+      "course" => $course,
+      "currentSection" => $currentSection,
+      "currentContent" => $currentContent,
+      "nextContent" => $nextContent,
+      "isFinished" => !$nextContent,
+    ];
   }
 
   public function searchCourses(string $keyword)

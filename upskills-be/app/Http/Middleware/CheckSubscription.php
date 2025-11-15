@@ -16,10 +16,18 @@ class CheckSubscription
      */
     public function handle(Request $request, Closure $next): Response
     {
-
         $user = Auth::user();
 
         if (!$user || !$user->hasActiveSubscription()) {
+            // Return JSON response for API requests
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'You need an active subscription to proceed.',
+                    'error' => 'subscription_required'
+                ], 403);
+            }
+
+            // Return redirect for web requests
             return redirect()->route("front.pricing")->with("error", "You need an active subscription to proceed.");
         }
 

@@ -1,339 +1,268 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { allCourses } from '../../data/courses';
-import { BookOpenIcon, MenuIcon, XIcon, ArrowLeftIcon, ArrowRightIcon, DownloadIcon, CheckCircleIcon } from '../../components/Icons';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import hljs from 'highlight.js';
-import { parseContent } from '../../utils/markdownParser';
-
-const escapeHtml = (text: string) => {
-    const p = document.createElement('p');
-    p.innerText = text;
-    return p.innerHTML;
-};
+import { useCourseLearning } from '../../hooks/useCourseLearning';
+import ProtectedRoute from '../../components/ProtectedRoute';
+import { 
+  ArrowLeftIcon, 
+  ChevronDownIcon, 
+  ChevronUpIcon,
+  CheckCircleIcon 
+} from '../../components/Icons';
 
 const StartLearning: React.FC = () => {
-    const { courseSlug } = useParams<{ courseSlug: string }>();
-    const navigate = useNavigate();
-    const course = allCourses.find(c => c.slug === courseSlug);
+  const { courseSlug, sectionId, contentId } = useParams<{ 
+    courseSlug: string; 
+    sectionId: string; 
+    contentId: string;
+  }>();
+  const navigate = useNavigate();
+  const { learningData, loading, error } = useCourseLearning(
+    courseSlug || '',
+    sectionId || '',
+    contentId || ''
+  );
+  const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-    const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
-    const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [parsedContent, setParsedContent] = useState('');
-    const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
-
-    const progressKey = `upskill-progress-${course?.slug}`;
-
-    useEffect(() => {
-        try {
-            const savedProgress = window.localStorage.getItem(progressKey);
-            if (savedProgress) {
-                setCompletedLessons(new Set(JSON.parse(savedProgress)));
-            }
-        } catch (error) {
-            console.error("Failed to load progress from localStorage", error);
-        }
-    }, [course?.slug]);
-
-    useEffect(() => {
-        try {
-            window.localStorage.setItem(progressKey, JSON.stringify(Array.from(completedLessons)));
-        } catch (error) {
-            console.error("Failed to save progress to localStorage", error);
-        }
-    }, [completedLessons, progressKey]);
-
-
-    const currentLesson = course?.curriculum[currentSectionIndex]?.lessons[currentLessonIndex];
-    
-    useEffect(() => {
-        if (currentLesson) {
-            setParsedContent(parseContent(currentLesson.content));
-        }
-    }, [currentLesson]);
-
-    useEffect(() => {
-        if (parsedContent) {
-            hljs.highlightAll();
-        }
-    }, [parsedContent]);
-
-    useEffect(() => {
-        window.scrollTo(0, 0);
-    }, [courseSlug, currentSectionIndex, currentLessonIndex]);
-
-    if (!course || !currentLesson) {
-        return (
-            <div className="flex items-center justify-center h-screen bg-slate-900">
-                <div className="text-center">
-                    <h1 className="text-4xl font-bold text-white mb-4">Course Not Found</h1>
-                    <p className="text-slate-400 mb-8">We couldn't find the course you were looking for.</p>
-                    <Link to="/courses" className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors">
-                        Back to Courses
-                    </Link>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    // Open the current section by default
+    if (learningData?.current_section) {
+      setOpenSections(prev => ({ ...prev, [learningData.current_section!.id]: true }));
     }
-    
-    const totalLessons = course.curriculum.reduce((acc, section) => acc + section.lessons.length, 0);
-    const progressPercentage = totalLessons > 0 ? (completedLessons.size / totalLessons) * 100 : 0;
-    
-    const getLessonId = (sectionIndex: number, lessonIndex: number) => `${sectionIndex}-${lessonIndex}`;
+  }, [learningData]);
 
-    const isLessonCompleted = (sectionIndex: number, lessonIndex: number) => {
-        return completedLessons.has(getLessonId(sectionIndex, lessonIndex));
-    };
-    
-    const isFirstLesson = currentSectionIndex === 0 && currentLessonIndex === 0;
-    const isLastLesson = currentSectionIndex === course.curriculum.length - 1 && currentLessonIndex === course.curriculum[currentSectionIndex].lessons.length - 1;
+  useEffect(() => {
+    // Highlight code blocks if highlight.js is available
+    if (typeof window !== 'undefined' && (window as any).hljs) {
+      document.querySelectorAll('pre code').forEach((block) => {
+        (window as any).hljs.highlightElement(block);
+      });
+    }
+  }, [learningData?.current_content?.content]);
 
-    const toggleCurrentLessonCompletion = () => {
-        const lessonId = getLessonId(currentSectionIndex, currentLessonIndex);
-        const newCompletedLessons = new Set(completedLessons);
-        if (newCompletedLessons.has(lessonId)) {
-            newCompletedLessons.delete(lessonId);
-        } else {
-            newCompletedLessons.add(lessonId);
-        }
-        setCompletedLessons(newCompletedLessons);
-    };
-
-    const handleNextLesson = () => {
-        const lessonId = getLessonId(currentSectionIndex, currentLessonIndex);
-        if (!completedLessons.has(lessonId)) {
-            const newCompletedLessons = new Set(completedLessons);
-            newCompletedLessons.add(lessonId);
-            setCompletedLessons(newCompletedLessons);
-        }
-
-        if (isLastLesson) {
-            navigate(`/courses/${course.slug}/completed`);
-            return;
-        }
-
-        if (currentLessonIndex < course.curriculum[currentSectionIndex].lessons.length - 1) {
-            setCurrentLessonIndex(currentLessonIndex + 1);
-        } else if (currentSectionIndex < course.curriculum.length - 1) {
-            setCurrentSectionIndex(currentSectionIndex + 1);
-            setCurrentLessonIndex(0);
-        }
-    };
-
-    const handlePrevLesson = () => {
-        if (currentLessonIndex > 0) {
-            setCurrentLessonIndex(currentLessonIndex - 1);
-        } else if (currentSectionIndex > 0) {
-            const prevSectionIndex = currentSectionIndex - 1;
-            const prevSectionLessonCount = course.curriculum[prevSectionIndex].lessons.length;
-            setCurrentSectionIndex(prevSectionIndex);
-            setCurrentLessonIndex(prevSectionLessonCount - 1);
-        }
-    };
-
-    const handleDownloadPdf = async () => {
-        const lessonContentElement = document.getElementById('lesson-content');
-        if (!lessonContentElement || isDownloading) return;
-    
-        setIsDownloading(true);
-    
-        // Create a temporary, off-screen container for rendering
-        const renderContainer = document.createElement('div');
-        renderContainer.style.position = 'absolute';
-        renderContainer.style.left = '-9999px';
-        renderContainer.style.width = '800px'; // A fixed width for consistent PDF layout
-        renderContainer.style.padding = '40px';
-        renderContainer.style.background = '#0F172A'; // bg-brand-dark
-        
-        // Add titles and content to the container
-        renderContainer.innerHTML = `
-            <div class="prose prose-invert prose-lg max-w-none prose-h3:text-blue-400 prose-a:text-blue-400 prose-strong:text-slate-100">
-                <h1 style="font-size: 24px; font-weight: bold; color: white; margin-bottom: 8px;">${escapeHtml(course.title)}</h1>
-                <p style="font-size: 16px; color: #94a3b8; margin-bottom: 24px; border-bottom: 1px solid #334155; padding-bottom: 16px;">${escapeHtml(currentLesson.title)}</p>
-            </div>
-        `;
-        renderContainer.appendChild(lessonContentElement.cloneNode(true));
-        
-        document.body.appendChild(renderContainer);
-    
-        try {
-            // Find all code blocks and re-apply highlighting
-            const codeBlocks = renderContainer.querySelectorAll('pre code');
-            codeBlocks.forEach((block) => {
-                hljs.highlightElement(block as HTMLElement);
-            });
-    
-            const canvas = await html2canvas(renderContainer, {
-                scale: 2,
-                backgroundColor: '#0F172A',
-                useCORS: true,
-            });
-    
-            const imgData = canvas.toDataURL('image/png');
-            
-            const pdf = new jsPDF({
-                orientation: 'portrait',
-                unit: 'px',
-                format: [canvas.width, canvas.height]
-            });
-    
-            pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
-            
-            const fileName = `${course.title} - ${currentLesson.title}.pdf`.replace(/[^a-zA-Z0-9_-\s]/g, '');
-    
-            pdf.save(fileName);
-        } catch (error) {
-            console.error("Failed to generate PDF", error);
-        } finally {
-            document.body.removeChild(renderContainer);
-            setIsDownloading(false);
-        }
-    };
-    
-    const currentLessonCompleted = isLessonCompleted(currentSectionIndex, currentLessonIndex);
-
-
+  if (loading) {
     return (
-        <div className="flex h-screen bg-slate-900 text-slate-300">
-            {/* Sidebar */}
-            <aside className={`bg-brand-dark border-r border-slate-800 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'w-80' : 'w-0 overflow-hidden'}`}>
-                <div className="p-4 border-b border-slate-800">
-                     <Link to={`/courses/${course.slug}`} className="text-lg font-bold text-white hover:text-blue-400">
-                        &larr; Back to Course
-                    </Link>
-                </div>
-                <div className="flex-grow overflow-y-auto">
-                    {course.curriculum.map((section, sectionIndex) => (
-                        <div key={sectionIndex} className="border-b border-slate-800">
-                            <h3 className="p-4 font-semibold text-white bg-slate-800/50">{section.title}</h3>
-                            <ul>
-                                {section.lessons.map((lesson, lessonIndex) => (
-                                    <li key={lessonIndex}>
-                                        <button 
-                                            onClick={() => {
-                                                setCurrentSectionIndex(sectionIndex);
-                                                setCurrentLessonIndex(lessonIndex);
-                                            }}
-                                            className={`w-full text-left p-4 text-sm flex items-center justify-between gap-3 transition-colors ${
-                                                currentSectionIndex === sectionIndex && currentLessonIndex === lessonIndex
-                                                    ? 'bg-blue-600/20 text-blue-300'
-                                                    : 'hover:bg-slate-800'
-                                            }`}
-                                        >
-                                             <div className="flex items-center gap-3">
-                                                <BookOpenIcon className="h-5 w-5 flex-shrink-0 text-slate-500" />
-                                                <span>{lesson.title}</span>
-                                            </div>
-                                            {isLessonCompleted(sectionIndex, lessonIndex) && (
-                                                <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
-                                            )}
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    ))}
-                </div>
-            </aside>
-
-            {/* Main Content */}
-            <div className="flex-1 flex flex-col overflow-y-auto">
-                <header className="bg-brand-dark/80 backdrop-blur-sm sticky top-0 z-10 border-b border-slate-800 flex items-center justify-between p-4 gap-4">
-                    <div className="flex-1 flex justify-start">
-                        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 rounded-md hover:bg-slate-800 transition-colors">
-                            {isSidebarOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
-                        </button>
-                    </div>
-                    <div className="flex-1 text-center">
-                        <h1 className="text-lg font-semibold text-white truncate">{course.title}</h1>
-                        <p className="text-sm text-slate-400">{currentLesson.title}</p>
-                    </div>
-                    <div className="flex-1 flex justify-end">
-                        <button
-                            onClick={handleDownloadPdf}
-                            disabled={isDownloading}
-                            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isDownloading ? (
-                                <>
-                                    <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    <span>Generating...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <DownloadIcon className="h-5 w-5" />
-                                    <span>Download PDF</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </header>
-
-                <main className="flex-1 p-6 sm:p-8 lg:p-12">
-                    <div className="max-w-4xl mx-auto">
-                        <div className="mb-8">
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-sm font-medium text-slate-400 truncate">{course.title}</span>
-                                <span className="text-sm font-medium text-blue-400">{completedLessons.size} / {totalLessons} Completed</span>
-                            </div>
-                            <div className="w-full bg-slate-700 rounded-full h-2.5">
-                                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
-                            </div>
-                        </div>
-
-                        <article id="lesson-content" className="prose prose-invert prose-lg max-w-none prose-h3:text-blue-400 prose-a:text-blue-400 hover:prose-a:text-blue-300 prose-strong:text-slate-100 prose-ul:list-disc prose-li:marker:text-blue-400">
-                            <h2 className="text-3xl font-bold text-white mb-6 !text-white">{currentLesson.title}</h2>
-                            <div dangerouslySetInnerHTML={{ __html: parsedContent }} />
-                        </article>
-
-                         <div className="mt-12 pt-6 border-t border-slate-700 flex justify-between items-center">
-                            <button
-                                onClick={handlePrevLesson}
-                                disabled={isFirstLesson}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <ArrowLeftIcon className="h-5 w-5" />
-                                <span>Previous</span>
-                            </button>
-                            
-                            <button
-                                onClick={toggleCurrentLessonCompletion}
-                                className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold border rounded-full transition-colors ${
-                                    currentLessonCompleted
-                                        ? 'bg-green-600/20 border-green-600/30 text-green-400'
-                                        : 'text-slate-300 border-slate-700 hover:bg-slate-800'
-                                }`}
-                            >
-                                {currentLessonCompleted ? (
-                                    <>
-                                        <CheckCircleIcon className="h-5 w-5" />
-                                        <span>Completed</span>
-                                    </>
-                                ) : (
-                                    <span>Mark as Complete</span>
-                                )}
-                            </button>
-
-                             <button
-                                onClick={handleNextLesson}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm disabled:bg-blue-800 disabled:cursor-not-allowed"
-                            >
-                                <span>{isLastLesson ? 'Finish Course' : 'Next Lesson'}</span>
-                                <ArrowRightIcon className="h-5 w-5" />
-                            </button>
-                        </div>
-                    </div>
-                </main>
-            </div>
+      <div className="flex h-screen bg-slate-900">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <svg
+              className="animate-spin h-12 w-12 text-blue-500 mx-auto"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <p className="mt-4 text-slate-400">Loading lesson...</p>
+          </div>
         </div>
+      </div>
     );
+  }
+
+  if (error || !learningData) {
+    return (
+      <div className="flex h-screen bg-slate-900">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-white mb-4">Error Loading Lesson</h1>
+            <p className="text-red-400 mb-6">{error || 'Failed to load lesson content'}</p>
+            <Link
+              to="/dashboard"
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const { course, current_section, current_content, next_content, is_finished } = learningData;
+  const thumbnailUrl = course.thumbnail || '/placeholder-course.jpg';
+
+  const handleNextLesson = () => {
+    if (is_finished) {
+      navigate(`/courses/${courseSlug}/completed`);
+    } else if (next_content) {
+      // Use course_section_id from API if available, otherwise find it
+      let nextSectionId = next_content.course_section_id;
+      
+      if (!nextSectionId) {
+        // Find the section ID for next content
+        const nextSection = course.course_sections?.find(section =>
+          section.section_contents?.some(content => content.id === next_content!.id)
+        );
+        nextSectionId = nextSection?.id;
+      }
+      
+      if (nextSectionId) {
+        navigate(`/courses/${courseSlug}/learn/${nextSectionId}/${next_content.id}`);
+      } else {
+        // If we can't find the section, navigate to completed
+        navigate(`/courses/${courseSlug}/completed`);
+      }
+    }
+  };
+
+  const isActiveContent = (sectionId: number, contentId: number) => {
+    return current_section?.id === sectionId && current_content?.id === contentId;
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-900 overflow-hidden">
+      {/* Sidebar */}
+      <aside
+        className={`${
+          isSidebarOpen ? 'w-64' : 'w-0'
+        } transition-all duration-300 flex flex-col border-r border-slate-800 bg-slate-800 overflow-hidden`}
+      >
+        {isSidebarOpen && (
+          <>
+            {/* Header */}
+            <div className="p-5 border-b border-slate-700">
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2 py-2 px-3 rounded-full border border-slate-700 bg-slate-900 hover:border-blue-500 transition-all text-slate-300 hover:text-white"
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+                <span>Back to Dashboard</span>
+              </Link>
+            </div>
+
+            {/* Course Info */}
+            <div className="p-5 border-b border-slate-700">
+              <div className="flex justify-center items-center overflow-hidden w-full h-24 rounded-lg mb-3 bg-slate-900">
+                <img src={thumbnailUrl} alt={course.name} className="w-full h-full object-cover" />
+              </div>
+              <h1 className="font-bold text-white text-sm line-clamp-2">{course.name}</h1>
+            </div>
+
+            {/* Lessons Navigation */}
+            <div className="flex-1 overflow-y-auto">
+              <nav className="p-5 space-y-4">
+                {course.course_sections?.map((section) => (
+                  <div key={section.id} className="space-y-2">
+                    <button
+                      onClick={() =>
+                        setOpenSections(prev => ({ ...prev, [section.id]: !prev[section.id] }))
+                      }
+                      className="w-full flex items-center justify-between text-left hover:text-white transition-colors"
+                    >
+                      <h2 className="font-semibold text-slate-300 text-sm">{section.name}</h2>
+                      {openSections[section.id] ? (
+                        <ChevronUpIcon className="h-5 w-5 text-slate-400" />
+                      ) : (
+                        <ChevronDownIcon className="h-5 w-5 text-slate-400" />
+                      )}
+                    </button>
+                    {openSections[section.id] && (
+                      <ul className="space-y-2 pl-2">
+                        {section.section_contents?.map((content) => {
+                          const isActive = isActiveContent(section.id, content.id);
+                          return (
+                            <li key={content.id}>
+                              <Link
+                                to={`/courses/${courseSlug}/learn/${section.id}/${content.id}`}
+                                className={`block px-3 py-2 rounded-full border transition-all text-sm ${
+                                  isActive
+                                    ? 'bg-blue-600 border-blue-600 text-white'
+                                    : 'border-slate-700 text-slate-300 hover:border-blue-500 hover:bg-slate-700'
+                                }`}
+                              >
+                                {content.name}
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </nav>
+            </div>
+          </>
+        )}
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Toggle Sidebar Button */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="absolute top-4 left-4 z-10 p-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:bg-slate-700 transition-colors lg:hidden"
+        >
+          {isSidebarOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Content Area */}
+        <main className="flex-1 overflow-y-auto p-8 lg:p-12">
+          <article className="max-w-4xl mx-auto">
+            {current_content && (
+              <div className="prose prose-invert max-w-none">
+                <h1 className="text-4xl font-bold text-white mb-6">{current_content.name}</h1>
+                <div
+                  className="text-slate-300 leading-relaxed prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-blue-400 prose-code:text-slate-200 prose-pre:bg-slate-800 prose-pre:border prose-pre:border-slate-700"
+                  dangerouslySetInnerHTML={{ __html: current_content.content }}
+                />
+              </div>
+            )}
+          </article>
+        </main>
+
+        {/* Bottom Navigation */}
+        <nav className="border-t border-slate-800 bg-slate-800/50 backdrop-blur-sm p-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-slate-400 text-sm">
+                Study the material carefully. If you have questions, ask your mentor.
+              </p>
+              <div className="flex items-center gap-3">
+                <button className="px-4 py-2 rounded-full border border-slate-700 text-slate-300 hover:border-blue-500 hover:text-white transition-all text-sm font-semibold">
+                  Ask Mentor
+                </button>
+                {is_finished ? (
+                  <Link
+                    to={`/courses/${courseSlug}/completed`}
+                    className="px-6 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition-colors font-semibold"
+                  >
+                    Finish Learning
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleNextLesson}
+                    disabled={!next_content}
+                    className="px-6 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next Lesson
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  );
 };
 
-export default StartLearning;
+const StartLearningWithProtection: React.FC = () => (
+  <ProtectedRoute>
+    <StartLearning />
+  </ProtectedRoute>
+);
+
+export default StartLearningWithProtection;

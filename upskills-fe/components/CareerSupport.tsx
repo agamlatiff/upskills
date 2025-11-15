@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AcademicCapIcon, DocumentCheckIcon, ChatBubbleLeftRightIcon, GlobeAltIcon } from './Icons';
 import { FeatureCard } from './career-support/FeatureCard';
 
@@ -39,9 +40,9 @@ const CareerSupport: React.FC = () => {
               Beyond learning—Upskill provides personal guidance, career tools, and networking opportunities to help you land your next role. You won’t navigate your career alone.
             </p>
             <div className="mt-10">
-              <a href="#" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">
+              <Link to="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">
                 Start Your Career Journey
-              </a>
+              </Link>
             </div>
           </div>
           

@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { EyeIcon, EyeOffIcon, XIcon, UserCircleIcon } from '../../components/Icons';
 import { getPasswordStrength } from '../../utils/passwordStrength';
 import { PasswordStrengthIndicator } from '../../components/PasswordStrengthIndicator';
+import { useAuth } from '../../hooks/useAuth';
 
 // Zod schema constants
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -44,6 +45,9 @@ type SignUpData = z.input<typeof SignUpSchema>;
 type FormErrors = z.inferFormattedError<typeof SignUpSchema>;
 
 const SignUp: React.FC = () => {
+    const navigate = useNavigate();
+    const { register, isAuthenticated, error: authError, clearError } = useAuth();
+    
     const [formData, setFormData] = useState<SignUpData>({
         profilePicture: null,
         fullName: '',
@@ -63,6 +67,19 @@ const SignUp: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [fileError, setFileError] = useState<string | null>(null);
+    const [apiErrors, setApiErrors] = useState<{ [key: string]: string[] }>({});
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [isAuthenticated, navigate]);
+
+    // Clear errors when component mounts
+    useEffect(() => {
+        clearError();
+    }, []);
 
 
     const openModal = () => setIsModalOpen(true);
@@ -186,6 +203,7 @@ const SignUp: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSubmitMessage('');
+        setApiErrors({});
         setIsSubmitting(true);
 
         setTouched({
@@ -198,11 +216,48 @@ const SignUp: React.FC = () => {
             return;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            // Map occupation values to match backend expectations
+            const occupationMap: { [key: string]: string } = {
+                'student': 'Student',
+                'software-engineer': 'Software Engineer',
+                'product-manager': 'Product Manager',
+                'ui-ux-designer': 'UI/UX Designer',
+                'data-scientist': 'Data Scientist',
+                'other': 'Other',
+            };
 
-        console.log('Form submitted successfully:', formData);
-        setSubmitMessage('Account created successfully! Welcome to Upskill.');
-        setIsSubmitting(false);
+            // Photo is required by backend
+            if (!formData.profilePicture) {
+                setSubmitMessage('Profile picture is required.');
+                setIsSubmitting(false);
+                return;
+            }
+
+            await register({
+                name: formData.fullName,
+                email: formData.email,
+                password: formData.password,
+                password_confirmation: formData.confirmPassword,
+                occupation: occupationMap[formData.occupation] || formData.occupation,
+                photo: formData.profilePicture,
+            });
+
+            setSubmitMessage('Account created successfully! Welcome to Upskill. Redirecting...');
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                navigate('/dashboard', { replace: true });
+            }, 1500);
+        } catch (error: any) {
+            // Handle API validation errors
+            if (error.errors) {
+                setApiErrors(error.errors);
+            } else {
+                setSubmitMessage(error.message || 'Registration failed. Please try again.');
+            }
+            setIsSubmitting(false);
+        }
     };
     
     const occupations = [
@@ -239,7 +294,7 @@ const SignUp: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-6" noValidate>
                             <div>
                                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                                    Profile Picture (Optional)
+                                    Profile Picture <span className="text-red-400">*</span>
                                 </label>
                                 <div className="mt-2 flex items-center gap-x-4">
                                     {imagePreview ? (
@@ -275,6 +330,9 @@ const SignUp: React.FC = () => {
                                     </div>
                                 </div>
                                 {(fileError || profilePictureError) && <p className="mt-2 text-xs text-red-400">{fileError || profilePictureError}</p>}
+                                {apiErrors.photo && apiErrors.photo.map((err, idx) => (
+                                    <p key={idx} className="mt-2 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
 
                             <div>
@@ -293,6 +351,9 @@ const SignUp: React.FC = () => {
                                     aria-invalid={!!fullNameError}
                                 />
                                 {fullNameError && <p className="mt-1 text-xs text-red-400">{fullNameError}</p>}
+                                {apiErrors.name && apiErrors.name.map((err, idx) => (
+                                    <p key={idx} className="mt-1 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
@@ -310,6 +371,9 @@ const SignUp: React.FC = () => {
                                     aria-invalid={!!emailError}
                                 />
                                 {emailError && <p className="mt-1 text-xs text-red-400">{emailError}</p>}
+                                {apiErrors.email && apiErrors.email.map((err, idx) => (
+                                    <p key={idx} className="mt-1 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                              <div>
                                 <label htmlFor="occupation" className="block text-sm font-medium text-slate-300 mb-2">
@@ -329,6 +393,9 @@ const SignUp: React.FC = () => {
                                     {occupations.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
                                 </select>
                                 {occupationError && <p className="mt-1 text-xs text-red-400">{occupationError}</p>}
+                                {apiErrors.occupation && apiErrors.occupation.map((err, idx) => (
+                                    <p key={idx} className="mt-1 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                             <div>
                                 <label htmlFor="password" className="block text-sm font-medium text-slate-300 mb-2">
@@ -360,6 +427,9 @@ const SignUp: React.FC = () => {
                                     <PasswordStrengthIndicator level={passwordStrength} />
                                 </div>
                                 {passwordError && <p className="mt-2 text-xs text-red-400">{passwordError}</p>}
+                                {apiErrors.password && apiErrors.password.map((err, idx) => (
+                                    <p key={idx} className="mt-2 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                              <div>
                                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-300 mb-2">
@@ -404,9 +474,9 @@ const SignUp: React.FC = () => {
                                 </div>
                             </div>
                             
-                            {submitMessage && (
-                                <div className="p-4 text-center text-sm rounded-lg bg-green-500/10 text-green-400 border border-green-500/20">
-                                    {submitMessage}
+                            {(submitMessage || authError) && (
+                                <div className={`p-4 text-center text-sm rounded-lg ${submitMessage.includes('successfully') || !authError ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                    {submitMessage || authError}
                                 </div>
                             )}
 

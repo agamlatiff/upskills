@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TransactionResource;
 use App\Models\Transaction;
 use App\Services\TransactionService;
 use Illuminate\Http\Request;
@@ -12,14 +13,15 @@ class DashboardController extends Controller
     {
     }
 
-    public function subscriptions()
+    public function subscriptions(Request $request)
     {
         $transactions = $this->transactionService->getUserTransactions();
-        return view("front.subscriptions", compact("transactions"));
+        return TransactionResource::collection($transactions->load('pricing', 'student'));
     }
 
     
-    public function subscription_details (Transaction $transaction) {
-        return view("front.subscription_details", compact("transaction"));
+    public function subscription_details(Request $request, Transaction $transaction) {
+        $transaction->load('pricing', 'student');
+        return new TransactionResource($transaction);
     }
 }

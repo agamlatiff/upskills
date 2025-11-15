@@ -67,10 +67,12 @@ const CourseDetail: React.FC = () => {
                             <h1 className="text-4xl font-extrabold text-white mb-3">{course.title}</h1>
                             <p className="text-xl text-slate-300 mb-6">{course.shortDescription}</p>
                             <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                    <img src={course.instructor.avatar} alt={course.instructor.name} className="h-8 w-8 rounded-full" />
-                                    <span className="font-medium text-slate-300">Created by {course.instructor.name}</span>
-                                </div>
+                                {course.instructor && (
+                                    <div className="flex items-center gap-2">
+                                        <img src={course.instructor?.avatar || '/placeholder-avatar.jpg'} alt={course.instructor?.name || 'Instructor'} className="h-8 w-8 rounded-full" />
+                                        <span className="font-medium text-slate-300">Created by {course.instructor?.name || 'Instructor'}</span>
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1.5">
                                     <span className="font-bold text-yellow-400">{course.rating}</span>
                                     <div className="flex">
@@ -78,7 +80,7 @@ const CourseDetail: React.FC = () => {
                                             <StarIcon key={i} className={`h-4 w-4 ${i < Math.round(course.rating) ? 'text-yellow-400' : 'text-slate-600'}`} />
                                         ))}
                                     </div>
-                                    <span className="text-slate-400">({course.students.toLocaleString()} students)</span>
+                                    <span className="text-slate-400">({(course.students ?? 0).toLocaleString()} students)</span>
                                 </div>
                             </div>
                         </div>
@@ -159,16 +161,18 @@ const CourseDetail: React.FC = () => {
                                 </div>
                                 
                                 {/* Instructor */}
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white mb-4">Instructor</h2>
-                                    <div className="flex items-center gap-4">
-                                        <img src={course.instructor.avatar} alt={course.instructor.name} className="h-24 w-24 rounded-full" />
-                                        <div>
-                                            <h3 className="text-xl font-bold text-blue-400">{course.instructor.name}</h3>
-                                            <p className="text-slate-400">Web Developer, Designer, and Teacher</p>
+                                {course.instructor && (
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white mb-4">Instructor</h2>
+                                        <div className="flex items-center gap-4">
+                                            <img src={course.instructor?.avatar || '/placeholder-avatar.jpg'} alt={course.instructor?.name || 'Instructor'} className="h-24 w-24 rounded-full" />
+                                            <div>
+                                                <h3 className="text-xl font-bold text-blue-400">{course.instructor?.name || 'Instructor'}</h3>
+                                                <p className="text-slate-400">Web Developer, Designer, and Teacher</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         </div>
 

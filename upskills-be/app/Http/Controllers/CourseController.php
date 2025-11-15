@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CourseResource;
 use App\Models\Course;
 use App\Services\CourseService;
 use Illuminate\Http\Request;
@@ -15,39 +16,70 @@ class CourseController extends Controller
     {
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $coursesByCategory = $this->courseService->getCoursesGroupedByCategory();
-        return view("courses.index", compact("coursesByCategory"));
+        
+        $formatted = $coursesByCategory->map(function ($courses, $categoryName) {
+            return [
+                'category' => $categoryName,
+                'courses' => CourseResource::collection($courses)
+            ];
+        })->values();
+        
+        return response()->json($formatted);
     }
 
-    public function details(Course $course)
+    public function details(Request $request, Course $course)
     {
         $course->load(["category", "benefits", "courseSections.sectionContents", "courseMentors.mentor"]);
-        return view("courses.details", compact("course"));
+        return new CourseResource($course);
     }
 
-    public function join(Course $course)
+    public function join(Request $request, Course $course)
     {
         $studentName = $this->courseService->enrollUser($course);
         $firstSectionAndContent = $this->courseService->getFirstSectionAndContent($course);
 
-        return view("courses.success_joined", array_merge(
-            compact("course", "studentName"),
-            $firstSectionAndContent
-        ));
+        return response()->json([
+            'message' => 'Successfully joined course',
+            'course' => new CourseResource($course),
+            'student_name' => $studentName,
+            'first_section_id' => $firstSectionAndContent['firstSectionId'],
+            'first_content_id' => $firstSectionAndContent['firstContentId'],
+        ]);
     }
 
-    public function learning(Course $course, $contentSectionId, $sectionContentid)
+    public function learning(Request $request, Course $course, $contentSectionId, $sectionContentid)
     {
         $learningData = $this->courseService->getLearningData($course, $contentSectionId, $sectionContentid);
 
-        return view("courses.learning", $learningData);
+        return response()->json([
+            'course' => new CourseResource($learningData['course']),
+            'current_section' => $learningData['currentSection'] ? [
+                'id' => $learningData['currentSection']->id,
+                'name' => $learningData['currentSection']->name,
+                'position' => $learningData['currentSection']->position,
+            ] : null,
+            'current_content' => $learningData['currentContent'] ? [
+                'id' => $learningData['currentContent']->id,
+                'name' => $learningData['currentContent']->name,
+                'content' => $learningData['currentContent']->content,
+            ] : null,
+            'next_content' => $learningData['nextContent'] ? [
+                'id' => $learningData['nextContent']->id,
+                'name' => $learningData['nextContent']->name,
+            ] : null,
+            'is_finished' => $learningData['isFinished'] ?? false,
+        ]);
     }
 
-    public function learning_finished(Course $course)
+    public function learning_finished(Request $request, Course $course)
     {
-        return view("courses.learning_finished", compact("course"));
+        return response()->json([
+            'message' => 'Course completed successfully',
+            'course' => new CourseResource($course),
+        ]);
     }
 
 
@@ -60,6 +92,9 @@ class CourseController extends Controller
         $keyword = $request->search;
         $courses = $this->courseService->searchCourses($keyword);
 
-        return view("courses.search", compact("courses", "keyword"));
+        return response()->json([
+            'keyword' => $keyword,
+            'courses' => CourseResource::collection($courses),
+        ]);
     }
 }

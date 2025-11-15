@@ -105,13 +105,13 @@ const Community: React.FC = () => {
                         {forumPosts.map(post => (
                              <a key={post.id} href="#" className="block bg-brand-dark p-6 border border-slate-800 rounded-2xl shadow-lg transition-all duration-300 hover:border-blue-500/50 hover:-translate-y-1">
                                 <div className="flex items-start gap-4">
-                                    <img src={post.author.avatar} alt={post.author.name} className="h-12 w-12 rounded-full flex-shrink-0" />
+                                    <img src={post.author?.avatar || '/placeholder-avatar.jpg'} alt={post.author?.name || 'User'} className="h-12 w-12 rounded-full flex-shrink-0" />
                                     <div className="flex-1">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h2 className="text-lg font-bold text-white mb-1">{post.title}</h2>
                                                 <p className="text-sm text-slate-400">
-                                                    Posted by <span className="font-semibold text-slate-300">{post.author.name}</span> &bull; {post.time}
+                                                    Posted by <span className="font-semibold text-slate-300">{post.author?.name || 'Unknown'}</span> &bull; {post.time}
                                                 </p>
                                             </div>
                                             <div className="hidden sm:flex items-center gap-2 p-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm font-semibold">
@@ -164,13 +164,13 @@ const Community: React.FC = () => {
                                 Top Contributors
                             </h3>
                             <ul className="space-y-4">
-                                {topContributors.map(user => (
-                                    <li key={user.name} className="flex items-center justify-between">
+                                {topContributors.map((user, index) => (
+                                    <li key={user?.name || index} className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <img src={user.avatar} alt={user.name} className="h-10 w-10 rounded-full" />
-                                            <span className="font-semibold text-slate-200">{user.name}</span>
+                                            <img src={user?.avatar || '/placeholder-avatar.jpg'} alt={user?.name || 'User'} className="h-10 w-10 rounded-full" />
+                                            <span className="font-semibold text-slate-200">{user?.name || 'Unknown'}</span>
                                         </div>
-                                        <span className="text-sm font-bold text-yellow-400">{user.points} pts</span>
+                                        <span className="text-sm font-bold text-yellow-400">{user?.points || '0'} pts</span>
                                     </li>
                                 ))}
                             </ul>

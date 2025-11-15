@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { SearchIcon, StarIcon, SparklesIcon, ChevronLeftIcon, ChevronRightIcon } from '../../components/Icons';
-import { allCourses } from '../../data/courses';
-import type { Course } from '../../types';
+import { useCourses } from '../../hooks/useCourses';
 import { CourseCard } from '../../components/CourseCard';
+import { Course as ApiCourse } from '../../types/api';
+import { getCourseThumbnailUrl } from '../../utils/imageUrl';
 
-const categoryOptions = ['Frontend', 'Backend', 'Data Science', 'UI/UX Design', 'DevOps'];
-const difficultyOptions = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
+// Helper function to convert API Course to frontend Course format
+const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
+  return {
+    id: apiCourse.id,
+    slug: apiCourse.slug,
+    title: apiCourse.name,
+    image: getCourseThumbnailUrl(apiCourse.thumbnail),
+    shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
+    category: apiCourse.category?.name || 'Uncategorized',
+    difficulty: 'All Levels', // Default since API doesn't provide this
+    duration: `${apiCourse.content_count || 0} lessons`,
+    rating: 4.8, // Default rating
+    students: 0, // Not provided by API
+    price: 0, // Not provided by API
+    isFree: false, // Not provided by API
+    popular: apiCourse.is_populer || false,
+    longDescription: apiCourse.about || '',
+    instructor: {
+      name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
+      avatar: '/placeholder-avatar.jpg',
+    },
+  };
+};
 
 const Courses: React.FC = () => {
-    const [filteredCourses, setFilteredCourses] = useState<Course[]>(allCourses);
+    const { courses: coursesByCategory, loading, error } = useCourses();
+    const [filteredCourses, setFilteredCourses] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
     const [difficultyFilters, setDifficultyFilters] = useState<string[]>([]);
@@ -16,6 +39,19 @@ const Courses: React.FC = () => {
     const [freeFilter, setFreeFilter] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const COURSES_PER_PAGE = 9;
+
+    // Get all unique categories from API
+    const categoryOptions = React.useMemo(() => {
+        const categories = new Set<string>();
+        coursesByCategory.forEach(group => {
+            if (group.category) {
+                categories.add(group.category);
+            }
+        });
+        return Array.from(categories).sort();
+    }, [coursesByCategory]);
+
+    const difficultyOptions = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
 
     const handleCategoryToggle = (category: string) => {
         setCategoryFilters(prev => 
@@ -29,8 +65,12 @@ const Courses: React.FC = () => {
         );
     };
 
+    // Convert API courses to frontend format
     useEffect(() => {
-        let courses = allCourses;
+        const allApiCourses = coursesByCategory.flatMap(group => group.courses || []);
+        const convertedCourses = allApiCourses.map(convertApiCourseToCourse);
+        
+        let courses = convertedCourses;
 
         if (searchTerm) {
             courses = courses.filter(course =>
@@ -58,7 +98,7 @@ const Courses: React.FC = () => {
         setFilteredCourses(courses);
         setCurrentPage(1);
 
-    }, [searchTerm, categoryFilters, difficultyFilters, popularFilter, freeFilter]);
+    }, [coursesByCategory, searchTerm, categoryFilters, difficultyFilters, popularFilter, freeFilter]);
 
     // Pagination logic
     const indexOfLastCourse = currentPage * COURSES_PER_PAGE;
@@ -75,6 +115,53 @@ const Courses: React.FC = () => {
             });
         }
     };
+
+    if (loading) {
+        return (
+            <main className="py-16 sm:py-20 lg:py-24 bg-slate-900 min-h-screen">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex items-center justify-center min-h-[400px]">
+                        <div className="text-center">
+                            <svg
+                                className="animate-spin h-12 w-12 text-blue-500 mx-auto"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                ></circle>
+                                <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                            </svg>
+                            <p className="mt-4 text-slate-400">Loading courses...</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        );
+    }
+
+    if (error) {
+        return (
+            <main className="py-16 sm:py-20 lg:py-24 bg-slate-900 min-h-screen">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-white mb-4">Error Loading Courses</h2>
+                        <p className="text-red-400 mb-6">{error}</p>
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="py-16 sm:py-20 lg:py-24 bg-slate-900">

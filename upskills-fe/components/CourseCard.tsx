@@ -31,7 +31,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                     <HeartIcon className={`h-6 w-6 transition-colors ${wishlisted ? 'text-red-500 fill-red-500' : 'text-white'}`} />
                 </button>
                 <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                    <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full">{course.category}</span>
+                    <span className="bg-blue-600 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                        {typeof course.category === 'string' ? course.category : course.category?.name || 'Uncategorized'}
+                    </span>
                     {course.popular && (
                         <span className="inline-flex items-center bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                             <StarIcon className="h-4 w-4 mr-1.5" />
@@ -52,10 +54,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                 <div className="mt-auto pt-4 border-t border-slate-700">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                         {/* Instructor */}
-                        <div className="col-span-2 flex items-center gap-3">
-                            <img src={course.instructor.avatar} alt={course.instructor.name} className="h-8 w-8 rounded-full object-cover" />
-                            <span className="font-medium text-slate-300 truncate">{course.instructor.name}</span>
-                        </div>
+                        {course.instructor && (
+                            <div className="col-span-2 flex items-center gap-3">
+                                <img src={course.instructor?.avatar || '/placeholder-avatar.jpg'} alt={course.instructor?.name || 'Instructor'} className="h-8 w-8 rounded-full object-cover" />
+                                <span className="font-medium text-slate-300 truncate">{course.instructor?.name || 'Instructor'}</span>
+                            </div>
+                        )}
                         
                         {/* Duration */}
                         <div className="flex items-center gap-2 text-slate-400">
@@ -73,7 +77,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                         <div className="col-span-2 flex items-center gap-2">
                              <StarIcon className="h-5 w-5 text-yellow-400" />
                             <span className="font-bold text-white">{course.rating}</span>
-                            <span className="text-slate-500">({course.students.toLocaleString()})</span>
+                            <span className="text-slate-500">({(course.students ?? 0).toLocaleString()})</span>
                         </div>
                     </div>
                 </div>

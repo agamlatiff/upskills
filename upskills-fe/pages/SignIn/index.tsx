@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { z } from 'zod';
 import { EyeIcon, EyeOffIcon } from '../../components/Icons';
+import { useAuth } from '../../hooks/useAuth';
 
 // Zod schema for sign-in
 const SignInSchema = z.object({
@@ -13,6 +14,10 @@ type SignInData = z.infer<typeof SignInSchema>;
 type FormErrors = z.inferFormattedError<typeof SignInSchema>;
 
 const SignIn: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { login, isAuthenticated, error: authError, clearError } = useAuth();
+    
     const [formData, setFormData] = useState<SignInData>({
         email: '',
         password: '',
@@ -22,6 +27,20 @@ const SignIn: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitMessage, setSubmitMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [apiErrors, setApiErrors] = useState<{ [key: string]: string[] }>({});
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            const from = (location.state as any)?.from?.pathname || '/dashboard';
+            navigate(from, { replace: true });
+        }
+    }, [isAuthenticated, navigate, location]);
+
+    // Clear errors when component mounts
+    useEffect(() => {
+        clearError();
+    }, []);
 
     const validateForm = (data: SignInData) => {
         const result = SignInSchema.safeParse(data);
@@ -52,6 +71,7 @@ const SignIn: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSubmitMessage('');
+        setApiErrors({});
         setIsSubmitting(true);
 
         setTouched({
@@ -64,13 +84,25 @@ const SignIn: React.FC = () => {
             return;
         }
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        console.log('Form submitted successfully:', formData);
-        setSubmitMessage('Signed in successfully! Redirecting...');
-        // In a real app, you would redirect here.
-        setIsSubmitting(false);
+        try {
+            await login(formData.email, formData.password);
+            setSubmitMessage('Signed in successfully! Redirecting...');
+            
+            // Redirect to dashboard or previous location
+            const from = (location.state as any)?.from?.pathname || '/dashboard';
+            setTimeout(() => {
+                navigate(from, { replace: true });
+            }, 1000);
+        } catch (error: any) {
+            setIsSubmitting(false);
+            // Handle API validation errors
+            if (error.errors) {
+                setApiErrors(error.errors);
+            } else {
+                setSubmitMessage(error.message || 'Login failed. Please check your credentials.');
+            }
+            setIsSubmitting(false);
+        }
     };
     
     const getError = (fieldName: keyof SignInData) => {
@@ -108,6 +140,9 @@ const SignIn: React.FC = () => {
                                     aria-invalid={!!emailError}
                                 />
                                 {emailError && <p className="mt-1 text-xs text-red-400">{emailError}</p>}
+                                {apiErrors.email && apiErrors.email.map((err, idx) => (
+                                    <p key={idx} className="mt-1 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                             
                             <div>
@@ -115,9 +150,9 @@ const SignIn: React.FC = () => {
                                     <label htmlFor="password" className="block text-sm font-medium text-slate-300">
                                         Password
                                     </label>
-                                    <a href="#" className="text-sm font-medium text-blue-400 hover:text-blue-300">
+                                    <Link to="/forgot-password" className="text-sm font-medium text-blue-400 hover:text-blue-300">
                                         Forgot password?
-                                    </a>
+                                    </Link>
                                 </div>
                                 <div className="relative">
                                     <input
@@ -142,11 +177,14 @@ const SignIn: React.FC = () => {
                                     </button>
                                 </div>
                                 {passwordError && <p className="mt-2 text-xs text-red-400">{passwordError}</p>}
+                                {apiErrors.password && apiErrors.password.map((err, idx) => (
+                                    <p key={idx} className="mt-2 text-xs text-red-400">{err}</p>
+                                ))}
                             </div>
                             
-                            {submitMessage && (
-                                <div className={`p-4 text-center text-sm rounded-lg ${submitMessage.includes('successfully') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                    {submitMessage}
+                            {(submitMessage || authError) && (
+                                <div className={`p-4 text-center text-sm rounded-lg ${submitMessage.includes('successfully') || !authError ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                    {submitMessage || authError}
                                 </div>
                             )}
 

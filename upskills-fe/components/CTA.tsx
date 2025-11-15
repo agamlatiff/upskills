@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const CTA: React.FC = () => {
   return (
@@ -19,12 +20,12 @@ const CTA: React.FC = () => {
             Join 5,000+ learners who are leveling up their skills with Upskill’s expert-led roadmaps, hands-on projects, and dedicated career support.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
-            <a href="#" className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-white text-blue-700 font-bold rounded-full shadow-lg hover:bg-slate-200 transition-transform hover:scale-105 duration-300">
+            <Link to="/signup" className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-white text-blue-700 font-bold rounded-full shadow-lg hover:bg-slate-200 transition-transform hover:scale-105 duration-300">
               Get Started Free
-            </a>
-            <a href="#" className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-transparent text-slate-200 font-semibold rounded-full ring-1 ring-slate-500 hover:bg-slate-800/50 transition-colors duration-300">
-              View Roadmaps
-            </a>
+            </Link>
+            <Link to="/pricing" className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-transparent text-slate-200 font-semibold rounded-full ring-1 ring-slate-500 hover:bg-slate-800/50 transition-colors duration-300">
+              View Pricing
+            </Link>
           </div>
           <p className="mt-6 text-sm text-slate-400">
             No credit card required — start learning today.

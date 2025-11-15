@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { LogoIcon, MenuIcon, XIcon, HeartIcon } from './Icons';
 import useWishlistStore from '../store/wishlistStore';
+import { useAuth } from '../hooks/useAuth';
+import { getProfilePhotoUrl } from '../utils/imageUrl';
 
 const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
   <Link to={to} className="text-slate-300 hover:text-blue-400 transition-colors duration-300">
@@ -12,6 +14,14 @@ const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, chil
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { wishlist } = useWishlistStore();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+    setIsMenuOpen(false);
+  };
 
   const navLinks = [
     { to: '/', label: 'Home' },
@@ -50,12 +60,47 @@ const Header: React.FC = () => {
                     <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-2 ring-brand-dark">{wishlist.length}</span>
                 )}
             </Link>
-            <Link to="/signin" className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
-              Sign In
-            </Link>
-            <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
-              Sign Up
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link to="/dashboard" className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  Dashboard
+                </Link>
+                <div className="relative group">
+                  <button className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-blue-400 transition-colors">
+                    <span>{user?.name}</span>
+                    {user?.photo ? (
+                      <img src={getProfilePhotoUrl(user.photo)} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
+                        <span className="text-xs text-slate-400">{user?.name?.charAt(0).toUpperCase()}</span>
+                      </div>
+                    )}
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                    <div className="py-1">
+                      <Link to="/profile" className="block px-4 py-2 text-slate-300 hover:bg-slate-700">
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-700"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/signin" className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  Sign In
+                </Link>
+                <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -90,12 +135,34 @@ const Header: React.FC = () => {
           </div>
           <div className="pt-4 pb-3 border-t border-slate-800">
             <div className="px-5 flex flex-col space-y-3">
-              <Link to="/signin" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
-                Sign In
-              </Link>
-              <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
-                Sign Up
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                    Dashboard
+                  </Link>
+                  <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-center px-5 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow-sm"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signin" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                    Sign In
+                  </Link>
+                  <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>

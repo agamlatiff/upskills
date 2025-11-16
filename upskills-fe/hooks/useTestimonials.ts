@@ -29,8 +29,10 @@ export const useTestimonials = (params?: UseTestimonialsParams) => {
       }
       const queryString = queryParams.toString();
       const url = `/testimonials${queryString ? `?${queryString}` : ''}`;
-      const response = await apiClient.get<Testimonial[]>(url);
-      setTestimonials(response.data);
+      const response = await apiClient.get<{ data: Testimonial[] } | Testimonial[]>(url);
+      // Handle both wrapped and unwrapped responses
+      const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
+      setTestimonials(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch testimonials');
     } finally {

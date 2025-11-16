@@ -50,6 +50,15 @@ class CourseResource extends Resource
                         true => "Populer",
                         false => "Not Populer"
                     ])->required(),
+                    Select::make("difficulty")->options([
+                        "beginner" => "Beginner",
+                        "intermediate" => "Intermediate",
+                        "advanced" => "Advanced"
+                    ])->default("beginner")->required(),
+                    Select::make("is_free")->options([
+                        true => "Free",
+                        false => "Paid"
+                    ])->default(false)->required(),
                     Select::make("category_id")->relationship("category", "name")->searchable()->preload()->required()
                 ])
             ]);
@@ -62,6 +71,22 @@ class CourseResource extends Resource
                 ImageColumn::make("thumbnail"),
                 TextColumn::make("name"),
                 TextColumn::make("category.name"),
+                TextColumn::make("difficulty")
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'beginner' => 'success',
+                        'intermediate' => 'warning',
+                        'advanced' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
+                IconColumn::make("is_free")
+                    ->boolean()
+                    ->trueColor("success")
+                    ->falseColor("gray")
+                    ->trueIcon("heroicon-o-check-circle")
+                    ->falseIcon("heroicon-o-x-circle")
+                    ->label("Free"),
                 IconColumn::make("is_populer")->boolean()->trueColor("success")->falseColor("danger")->trueIcon("heroicon-o-check-circle")->falseIcon("heroicon-o-x-circle")->label("Popular")
             ])
             ->filters([

@@ -71,8 +71,8 @@ const Pricing: React.FC = () => {
   }
 
   const planFeatures = [
-    "Access 1500+ Online Courses",
-    "Get Premium Certifications",
+    "Access All Online Courses",
+    "Get Premium Courses",
     "High Quality Work Portfolio",
     "Career Consultation 2025",
     "Support learning 24/7",

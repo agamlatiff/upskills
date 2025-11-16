@@ -81,6 +81,14 @@ const Header: React.FC = () => {
                       <Link to="/profile" className="block px-4 py-2 text-slate-300 hover:bg-slate-700">
                         Profile
                       </Link>
+                      {user?.roles && (Array.isArray(user.roles) ? user.roles : []).some((r: any) => {
+                        const roleName = typeof r === 'string' ? r : r?.name || '';
+                        return roleName === 'mentor';
+                      }) && (
+                        <Link to="/mentor/courses" className="block px-4 py-2 text-slate-300 hover:bg-slate-700">
+                          My Courses
+                        </Link>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-slate-300 hover:bg-slate-700"
@@ -143,6 +151,14 @@ const Header: React.FC = () => {
                   <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
                     Profile
                   </Link>
+                  {user?.roles && (Array.isArray(user.roles) ? user.roles : []).some((r: any) => {
+                    const roleName = typeof r === 'string' ? r : r?.name || '';
+                    return roleName === 'mentor';
+                  }) && (
+                    <Link to="/mentor/courses" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                      My Courses
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       handleLogout();

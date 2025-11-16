@@ -1,10 +1,8 @@
 
-
 import React, { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { roadmapsData } from '../data/roadmaps';
-import { allCourses } from '../data/courses';
-import { MapIcon, BookOpenIcon, ChartBarIcon } from './Icons';
+import { MapIcon } from './Icons';
 
 const Roadmap: React.FC = () => {
     const { roadmapId } = useParams<{ roadmapId: string }>();
@@ -28,7 +26,6 @@ const Roadmap: React.FC = () => {
         );
     }
     
-    const totalCourses = roadmap.phases.reduce((acc, phase) => acc + phase.relatedCourseIds.length, 0);
 
     return (
         <main className="bg-slate-900">
@@ -43,8 +40,6 @@ const Roadmap: React.FC = () => {
                         </p>
                         <div className="mt-8 flex justify-center items-center space-x-6 text-sm font-medium text-slate-300">
                             <span>{roadmap.phases.length} Phases</span>
-                            <span className="text-slate-600">•</span>
-                            <span>{totalCourses} Related Courses</span>
                         </div>
                     </div>
                 </div>
@@ -87,33 +82,6 @@ const Roadmap: React.FC = () => {
                                                 </li>
                                             ))}
                                         </ul>
-
-                                        {phase.relatedCourseIds.length > 0 && (
-                                            <>
-                                                <h4 className="text-lg font-semibold text-white mb-4">Related Courses</h4>
-                                                <div className="space-y-3">
-                                                    {phase.relatedCourseIds.map(courseId => {
-                                                        const course = allCourses.find(c => c.id === courseId);
-                                                        if (!course) return null;
-                                                        return (
-                                                            <Link key={course.id} to={`/courses/${course.slug}`} className="block bg-slate-800/50 hover:bg-slate-800 p-4 rounded-lg transition-colors">
-                                                                <p className="font-semibold text-slate-200">{course.title}</p>
-                                                                <div className="flex items-center justify-between text-xs text-slate-400 mt-2">
-                                                                     <div className="flex items-center gap-1.5">
-                                                                        <BookOpenIcon className="h-4 w-4 text-slate-500" />
-                                                                        <span>{course.duration}</span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <ChartBarIcon className="h-4 w-4 text-slate-500" />
-                                                                        <span>{course.difficulty}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </Link>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </>
-                                        )}
                                     </div>
                                 </div>
                             ))}

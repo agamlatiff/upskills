@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/front', [FrontController::class, 'index'])->name('api.front.index');
 Route::get('/pricing', [FrontController::class, 'pricing'])->name('api.pricing');
 Route::get('/testimonials', [TestimonialController::class, 'index'])->name('api.testimonials.index');
+Route::get('/categories', [\App\Http\Controllers\CategoryController::class, 'index'])->name('api.categories.index');
 
 // Public course routes (no authentication required)
 Route::get('/courses', [CourseController::class, 'index'])->name('api.courses.index');
@@ -82,6 +83,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('api.wishlist.index');
     Route::post('/wishlist', [WishlistController::class, 'store'])->name('api.wishlist.store');
     Route::delete('/wishlist/{course}', [WishlistController::class, 'destroy'])->name('api.wishlist.destroy');
+    
+    // Mentor routes
+    Route::middleware('role:mentor')->group(function () {
+        Route::get('/mentor/courses', [\App\Http\Controllers\MentorCourseController::class, 'index'])->name('api.mentor.courses.index');
+        Route::post('/mentor/courses', [\App\Http\Controllers\MentorCourseController::class, 'store'])->name('api.mentor.courses.store');
+        Route::put('/mentor/courses/{course}', [\App\Http\Controllers\MentorCourseController::class, 'update'])->name('api.mentor.courses.update');
+        Route::delete('/mentor/courses/{course}', [\App\Http\Controllers\MentorCourseController::class, 'destroy'])->name('api.mentor.courses.destroy');
+        
+        // Course Sections
+        Route::get('/mentor/courses/{course}/sections', [\App\Http\Controllers\MentorCourseSectionController::class, 'index'])->name('api.mentor.courses.sections.index');
+        Route::post('/mentor/courses/{course}/sections', [\App\Http\Controllers\MentorCourseSectionController::class, 'store'])->name('api.mentor.courses.sections.store');
+        Route::put('/mentor/courses/{course}/sections/{section}', [\App\Http\Controllers\MentorCourseSectionController::class, 'update'])->name('api.mentor.courses.sections.update');
+        Route::delete('/mentor/courses/{course}/sections/{section}', [\App\Http\Controllers\MentorCourseSectionController::class, 'destroy'])->name('api.mentor.courses.sections.destroy');
+        
+        // Section Contents
+        Route::get('/mentor/courses/{course}/sections/{section}/contents', [\App\Http\Controllers\MentorSectionContentController::class, 'index'])->name('api.mentor.sections.contents.index');
+        Route::post('/mentor/courses/{course}/sections/{section}/contents', [\App\Http\Controllers\MentorSectionContentController::class, 'store'])->name('api.mentor.sections.contents.store');
+        Route::put('/mentor/courses/{course}/sections/{section}/contents/{content}', [\App\Http\Controllers\MentorSectionContentController::class, 'update'])->name('api.mentor.sections.contents.update');
+        Route::delete('/mentor/courses/{course}/sections/{section}/contents/{content}', [\App\Http\Controllers\MentorSectionContentController::class, 'destroy'])->name('api.mentor.sections.contents.destroy');
+    });
     
     // Student routes
     Route::middleware('role:student')->group(function () {

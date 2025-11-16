@@ -1,12 +1,18 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LogoIcon, MenuIcon, XIcon, HeartIcon } from './Icons';
-import { useWishlist } from '../hooks/useWishlist';
-import { useAuth } from '../hooks/useAuth';
-import { getProfilePhotoUrl } from '../utils/imageUrl';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { LogoIcon, MenuIcon, XIcon, HeartIcon } from "./Icons";
+import { useWishlist } from "../hooks/useWishlist";
+import { useAuth } from "../hooks/useAuth";
+import { getProfilePhotoUrl } from "../utils/imageUrl";
 
-const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
-  <Link to={to} className="text-slate-300 hover:text-blue-400 transition-colors duration-300">
+const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({
+  to,
+  children,
+}) => (
+  <Link
+    to={to}
+    className="text-slate-300 hover:text-blue-400 transition-colors duration-300"
+  >
     {children}
   </Link>
 );
@@ -14,21 +20,29 @@ const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, chil
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { wishlist } = useWishlist();
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, user, logout, checkAuth } = useAuth();
   const navigate = useNavigate();
+
+  // Debug: Log user roles in development
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "development" && user) {
+      console.log("Header - User roles:", user.roles);
+      console.log("Header - User object:", user);
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     await logout();
-    navigate('/');
+    navigate("/");
     setIsMenuOpen(false);
   };
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/courses', label: 'Courses' },
-    { to: '/pricing', label: 'Pricing' },
-    { to: '/features', label: 'Features' },
-    { to: '/testimonials', label: 'Testimonials' },
+    { to: "/", label: "Home" },
+    { to: "/courses", label: "Courses" },
+    { to: "/pricing", label: "Pricing" },
+    { to: "/features", label: "Features" },
+    { to: "/testimonials", label: "Testimonials" },
   ];
 
   return (
@@ -39,7 +53,7 @@ const Header: React.FC = () => {
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center gap-2">
               <LogoIcon className="h-8 w-8 text-blue-500" />
-              <span className="text-2xl font-bold text-slate-50">Upskill</span>
+              <span className="text-2xl font-bold text-slate-50">Upskills</span>
             </Link>
           </div>
 
@@ -54,38 +68,81 @@ const Header: React.FC = () => {
 
           {/* Desktop Action Buttons */}
           <div className="hidden lg:flex items-center space-x-4 ml-auto">
-            <Link to="/wishlist" className="relative text-slate-300 hover:text-blue-400 transition-colors p-2" aria-label={`Wishlist, ${wishlist.length} items`}>
-                <HeartIcon className="h-6 w-6" />
-                {wishlist.length > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-2 ring-brand-dark">{wishlist.length}</span>
-                )}
+            <Link
+              to="/wishlist"
+              className="relative text-slate-300 hover:text-blue-400 transition-colors p-2"
+              aria-label={`Wishlist, ${wishlist.length} items`}
+            >
+              <HeartIcon className="h-6 w-6" />
+              {wishlist.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-2 ring-brand-dark">
+                  {wishlist.length}
+                </span>
+              )}
             </Link>
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                <Link
+                  to="/dashboard"
+                  className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                >
                   Dashboard
                 </Link>
                 <div className="relative group">
                   <button className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-blue-400 transition-colors">
                     <span>{user?.name}</span>
                     {user?.photo ? (
-                      <img src={getProfilePhotoUrl(user.photo)} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                      <img
+                        src={getProfilePhotoUrl(user.photo)}
+                        alt={user.name}
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center">
-                        <span className="text-xs text-slate-400">{user?.name?.charAt(0).toUpperCase()}</span>
+                        <span className="text-xs text-slate-400">
+                          {user?.name?.charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     )}
                   </button>
                   <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                     <div className="py-1">
-                      <Link to="/profile" className="block px-4 py-2 text-slate-300 hover:bg-slate-700">
+                      <Link
+                        to="/profile"
+                        className="block px-4 py-2 text-slate-300 hover:bg-slate-700"
+                      >
                         Profile
                       </Link>
-                      {user?.roles && (Array.isArray(user.roles) ? user.roles : []).some((r: any) => {
-                        const roleName = typeof r === 'string' ? r : r?.name || '';
-                        return roleName === 'mentor';
-                      }) && (
-                        <Link to="/mentor/courses" className="block px-4 py-2 text-slate-300 hover:bg-slate-700">
+                      {(() => {
+                        // Check if user has mentor role
+                        const userRoles = user?.roles || [];
+                        const roleArray = Array.isArray(userRoles)
+                          ? userRoles
+                          : [];
+                        const hasMentorRole = roleArray.some((r: any) => {
+                          const roleName =
+                            typeof r === "string" ? r : r?.name || "";
+                          return roleName === "mentor";
+                        });
+
+                        // Debug in development
+                        if (process.env.NODE_ENV === "development") {
+                          console.log(
+                            "Header dropdown - User roles:",
+                            userRoles
+                          );
+                          console.log(
+                            "Header dropdown - Has mentor role:",
+                            hasMentorRole
+                          );
+                        }
+
+                        return hasMentorRole;
+                      })() && (
+                        <Link
+                          to="/mentor/courses"
+                          className="block px-4 py-2 text-slate-300 hover:bg-slate-700"
+                        >
                           My Courses
                         </Link>
                       )}
@@ -101,10 +158,16 @@ const Header: React.FC = () => {
               </>
             ) : (
               <>
-                <Link to="/signin" className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                <Link
+                  to="/signin"
+                  className="px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                >
                   Sign In
                 </Link>
-                <Link to="/signup" className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
+                <Link
+                  to="/signup"
+                  className="px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+                >
                   Sign Up
                 </Link>
               </>
@@ -118,7 +181,11 @@ const Header: React.FC = () => {
               className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             >
               <span className="sr-only">Open main menu</span>
-              {isMenuOpen ? <XIcon className="h-6 w-6" /> : <MenuIcon className="h-6 w-6" />}
+              {isMenuOpen ? (
+                <XIcon className="h-6 w-6" />
+              ) : (
+                <MenuIcon className="h-6 w-6" />
+              )}
             </button>
           </div>
         </div>
@@ -129,33 +196,64 @@ const Header: React.FC = () => {
         <div className="lg:hidden absolute top-20 left-0 w-full bg-brand-dark shadow-lg border-t border-slate-800">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
-              <Link key={link.label} to={link.to} onClick={() => setIsMenuOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-slate-200 hover:text-blue-400 hover:bg-slate-800/50">
+              <Link
+                key={link.label}
+                to={link.to}
+                onClick={() => setIsMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-200 hover:text-blue-400 hover:bg-slate-800/50"
+              >
                 {link.label}
               </Link>
             ))}
-            <Link to="/wishlist" onClick={() => setIsMenuOpen(false)} className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-slate-200 hover:text-blue-400 hover:bg-slate-800/50">
-                <HeartIcon className="h-6 w-6" />
-                <span>Wishlist</span>
-                {wishlist.length > 0 && (
-                    <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">{wishlist.length}</span>
-                )}
+            <Link
+              to="/wishlist"
+              onClick={() => setIsMenuOpen(false)}
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-slate-200 hover:text-blue-400 hover:bg-slate-800/50"
+            >
+              <HeartIcon className="h-6 w-6" />
+              <span>Wishlist</span>
+              {wishlist.length > 0 && (
+                <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
+                  {wishlist.length}
+                </span>
+              )}
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-slate-800">
             <div className="px-5 flex flex-col space-y-3">
               {isAuthenticated ? (
                 <>
-                  <Link to="/dashboard" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  <Link
+                    to="/dashboard"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                  >
                     Dashboard
                   </Link>
-                  <Link to="/profile" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                  >
                     Profile
                   </Link>
-                  {user?.roles && (Array.isArray(user.roles) ? user.roles : []).some((r: any) => {
-                    const roleName = typeof r === 'string' ? r : r?.name || '';
-                    return roleName === 'mentor';
-                  }) && (
-                    <Link to="/mentor/courses" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  {(() => {
+                    // Check if user has mentor role
+                    const userRoles = user?.roles || [];
+                    const roleArray = Array.isArray(userRoles) ? userRoles : [];
+                    const hasMentorRole = roleArray.some((r: any) => {
+                      const roleName =
+                        typeof r === "string" ? r : r?.name || "";
+                      return roleName === "mentor";
+                    });
+
+                    return hasMentorRole;
+                  })() && (
+                    <Link
+                      to="/mentor/courses"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                    >
                       My Courses
                     </Link>
                   )}
@@ -171,10 +269,18 @@ const Header: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Link to="/signin" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors">
+                  <Link
+                    to="/signin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                  >
                     Sign In
                   </Link>
-                  <Link to="/signup" onClick={() => setIsMenuOpen(false)} className="w-full text-center px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm">
+                  <Link
+                    to="/signup"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-center px-5 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+                  >
                     Sign Up
                   </Link>
                 </>

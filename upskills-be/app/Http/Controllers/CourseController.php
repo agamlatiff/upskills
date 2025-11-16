@@ -38,6 +38,19 @@ class CourseController extends Controller
 
     public function join(Request $request, Course $course)
     {
+        $user = $request->user();
+        
+        // Check if user is a mentor who owns this course
+        $isMentorOfCourse = false;
+        if ($user && $user->hasRole('mentor')) {
+            $isMentorOfCourse = $course->courseMentors()
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+        
+        // If mentor owns the course, allow access without subscription check
+        // Otherwise, subscription check is handled by middleware
+        
         $studentName = $this->courseService->enrollUser($course);
         $firstSectionAndContent = $this->courseService->getFirstSectionAndContent($course);
 
@@ -47,6 +60,7 @@ class CourseController extends Controller
             'student_name' => $studentName,
             'first_section_id' => $firstSectionAndContent['firstSectionId'],
             'first_content_id' => $firstSectionAndContent['firstContentId'],
+            'is_mentor_owned' => $isMentorOfCourse,
         ]);
     }
 

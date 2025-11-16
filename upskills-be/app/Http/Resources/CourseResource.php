@@ -16,27 +16,19 @@ class CourseResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Calculate average rating from testimonials (with error handling)
-        $averageRating = null;
-        $ratingCount = 0;
-
+        // Get testimonial count (no ratings)
+        $testimonialCount = 0;
         try {
             if (DB::getSchemaBuilder()->hasTable('testimonials')) {
-                $averageRating = DB::table('testimonials')
+                $testimonialCount = DB::table('testimonials')
                     ->where('course_id', $this->id)
-                    ->whereNotNull('rating')
-                    ->avg('rating');
-
-                $ratingCount = DB::table('testimonials')
-                    ->where('course_id', $this->id)
-                    ->whereNotNull('rating')
+                    ->where('is_verified', true)
                     ->count();
             }
         } catch (\Exception $e) {
-            // Silently fail - ratings are optional
-            // Log error in development/debugging but don't expose to users
+            // Silently fail
             if (config('app.debug')) {
-                \Log::debug('Error calculating course rating: ' . $e->getMessage());
+                \Log::debug('Error calculating testimonial count: ' . $e->getMessage());
             }
         }
 
@@ -50,8 +42,7 @@ class CourseResource extends JsonResource
             'difficulty' => $this->difficulty ?? 'beginner',
             'is_free' => $this->is_free ?? false,
             'content_count' => $this->content_count,
-            'rating' => $averageRating ? round($averageRating, 1) : null,
-            'rating_count' => $ratingCount,
+            'testimonial_count' => $testimonialCount,
             'category' => $this->whenLoaded('category', function () {
                 return [
                     'id' => $this->category->id,

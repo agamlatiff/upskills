@@ -17,7 +17,6 @@ class TestimonialResource extends JsonResource
         return [
             'id' => $this->id,
             'quote' => $this->quote,
-            'rating' => $this->rating,
             'outcome' => $this->outcome,
             'is_verified' => $this->is_verified,
             'user' => $this->whenLoaded('user', function () {

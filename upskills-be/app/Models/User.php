@@ -72,4 +72,14 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->Transactions()->where("is_paid", true)->where("ended_at", ">=", now())->exists();
     }
+
+    public function courseCompletions(): HasMany
+    {
+        return $this->hasMany(CourseCompletion::class, "user_id");
+    }
+
+    public function hasCompletedCourse($courseId): bool
+    {
+        return $this->courseCompletions()->where("course_id", $courseId)->exists();
+    }
 }

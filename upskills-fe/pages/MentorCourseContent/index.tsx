@@ -97,6 +97,14 @@ const MentorCourseContent: React.FC = () => {
         expanded[section.id] = true;
       });
       setExpandedSections(expanded);
+
+      // Update form position to next available if form is open and not editing
+      if (showSectionForm && !editingSection) {
+        const maxPosition = sectionsData.length > 0 
+          ? Math.max(...sectionsData.map((s: CourseSection) => s.position)) 
+          : 0;
+        setSectionFormData(prev => ({ ...prev, position: maxPosition + 1 }));
+      }
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to load course content');
     } finally {
@@ -126,8 +134,13 @@ const MentorCourseContent: React.FC = () => {
       } else {
         await apiClient.post(`/mentor/courses/${courseId}/sections`, sectionFormData);
         toast.success('Section created successfully!');
+        // After creating, increment position for next section
+        const nextPosition = sectionFormData.position + 1;
+        setSectionFormData(prev => ({ ...prev, name: '', position: nextPosition }));
       }
-      resetSectionForm();
+      if (editingSection) {
+        resetSectionForm();
+      }
       fetchCourseAndSections();
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Failed to save section');
@@ -158,7 +171,11 @@ const MentorCourseContent: React.FC = () => {
   };
 
   const resetSectionForm = () => {
-    setSectionFormData({ name: '', position: sections.length + 1 });
+    // Calculate next position based on max position + 1
+    const maxPosition = sections.length > 0 
+      ? Math.max(...sections.map(s => s.position)) 
+      : 0;
+    setSectionFormData({ name: '', position: maxPosition + 1 });
     setEditingSection(null);
     setShowSectionForm(false);
   };
@@ -294,13 +311,41 @@ const MentorCourseContent: React.FC = () => {
                 <label className="block text-sm font-semibold text-slate-300 mb-2">
                   Position
                 </label>
-                <input
-                  type="number"
-                  value={sectionFormData.position}
-                  onChange={(e) => setSectionFormData({ ...sectionFormData, position: parseInt(e.target.value) || 1 })}
-                  className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  min="1"
-                />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (sectionFormData.position > 1) {
+                        setSectionFormData({ ...sectionFormData, position: sectionFormData.position - 1 });
+                      }
+                    }}
+                    disabled={sectionFormData.position <= 1}
+                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg border border-slate-600 transition-colors"
+                    aria-label="Decrease position"
+                  >
+                    <ChevronDownIcon className="h-5 w-5" />
+                  </button>
+                  <input
+                    type="number"
+                    value={sectionFormData.position}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 1;
+                      setSectionFormData({ ...sectionFormData, position: Math.max(1, value) });
+                    }}
+                    className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold"
+                    min="1"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSectionFormData({ ...sectionFormData, position: sectionFormData.position + 1 });
+                    }}
+                    className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-slate-700 hover:bg-slate-600 text-white rounded-lg border border-slate-600 transition-colors"
+                    aria-label="Increase position"
+                  >
+                    <ChevronUpIcon className="h-5 w-5" />
+                  </button>
+                </div>
                 <p className="mt-2 text-xs text-slate-400">Order in which this section appears (lower numbers appear first)</p>
               </div>
 
@@ -393,7 +438,13 @@ const MentorCourseContent: React.FC = () => {
             <div className="text-center py-16 bg-brand-dark border border-slate-800 rounded-2xl">
               <p className="text-slate-400 mb-4">No sections yet. Create your first section to start adding content.</p>
               <button
-                onClick={() => setShowSectionForm(true)}
+                onClick={() => {
+                  const maxPosition = sections.length > 0 
+                    ? Math.max(...sections.map(s => s.position)) 
+                    : 0;
+                  setSectionFormData({ name: '', position: maxPosition + 1 });
+                  setShowSectionForm(true);
+                }}
                 className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors"
               >
                 <PlusIcon className="h-5 w-5" />
@@ -405,7 +456,13 @@ const MentorCourseContent: React.FC = () => {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-white">Course Sections</h2>
                 <button
-                  onClick={() => setShowSectionForm(true)}
+                  onClick={() => {
+                    const maxPosition = sections.length > 0 
+                      ? Math.max(...sections.map(s => s.position)) 
+                      : 0;
+                    setSectionFormData({ name: '', position: maxPosition + 1 });
+                    setShowSectionForm(true);
+                  }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <PlusIcon className="h-5 w-5" />

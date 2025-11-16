@@ -98,14 +98,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course }) => {
                             </span>
                         </div>
                         
-                        {/* Rating */}
-                        {course.rating > 0 && (
-                            <div className="col-span-2 flex items-center gap-2">
-                                <StarIcon className="h-5 w-5 text-yellow-400" />
-                                <span className="font-bold text-white">{course.rating.toFixed(1)}</span>
-                                <span className="text-slate-500">({(course.students ?? 0).toLocaleString()})</span>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

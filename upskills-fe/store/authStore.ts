@@ -59,7 +59,64 @@ const useAuthStore = create<AuthState>()(
             error: null,
           });
         } catch (error: any) {
-          const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Login failed';
+          const status = error.response?.status;
+          const errorData = error.response?.data || {};
+          
+          // Handle validation errors (422) - usually wrong credentials or missing fields
+          if (status === 422) {
+            const validationErrors = errorData.errors || {};
+            let errorMessage = 'Invalid email or password. Please check your credentials.';
+            
+            // Extract specific error messages
+            if (validationErrors.email) {
+              const emailError = Array.isArray(validationErrors.email) 
+                ? validationErrors.email[0] 
+                : validationErrors.email;
+              // Check if it's an authentication failure message
+              if (emailError.includes('credentials') || emailError.includes('failed')) {
+                errorMessage = 'Invalid email or password. Please try again.';
+              } else {
+                errorMessage = emailError;
+              }
+            } else if (validationErrors.password) {
+              errorMessage = Array.isArray(validationErrors.password) 
+                ? validationErrors.password[0] 
+                : validationErrors.password;
+            } else if (errorData.message && !errorData.message.includes('given data was invalid')) {
+              errorMessage = errorData.message;
+            }
+            
+            // Create a formatted error object with validation errors
+            const formattedError: any = new Error(errorMessage);
+            formattedError.errors = validationErrors;
+            formattedError.status = 422;
+            
+            set({
+              error: null, // Don't set global error, let component handle it
+              isLoading: false,
+              isAuthenticated: false,
+            });
+            throw formattedError;
+          }
+          
+          // Handle authentication failures (401)
+          if (status === 401) {
+            const errorMessage = errorData.message || 'Invalid email or password. Please try again.';
+            set({
+              error: errorMessage,
+              isLoading: false,
+              isAuthenticated: false,
+            });
+            
+            const formattedError: any = new Error(errorMessage);
+            formattedError.status = 401;
+            throw formattedError;
+          }
+          
+          // Handle other errors
+          const errorMessage = errorData.message || 
+                              errorData.error || 
+                              'Login failed. Please try again.';
           set({
             error: errorMessage,
             isLoading: false,

@@ -50,6 +50,11 @@ class Course extends Model
         return $this->hasMany(CourseMentor::class, "course_id");
     }
 
+    public function courseCompletions(): HasMany
+    {
+        return $this->hasMany(CourseCompletion::class, "course_id");
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class, "category_id");

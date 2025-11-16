@@ -23,7 +23,7 @@ const Footer: React.FC = () => {
                     <div className="space-y-4">
                         <Link to="/" className="flex items-center gap-2">
                             <LogoIcon className="h-8 w-8 text-blue-500" />
-                            <span className="text-2xl font-bold text-slate-50">Upskill</span>
+                            <span className="text-2xl font-bold text-slate-50">Upskills</span>
                         </Link>
                         <p className="text-slate-400 text-sm max-w-xs">
                             Master in-demand skills, build a strong portfolio, and accelerate your tech career.
@@ -73,7 +73,7 @@ const Footer: React.FC = () => {
                 </div>
                 
                 <div className="mt-12 border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
-                    <p>&copy; {new Date().getFullYear()} Upskill, Inc. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} Upskills, Inc. All rights reserved.</p>
                 </div>
             </div>
         </footer>

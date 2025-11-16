@@ -71,8 +71,7 @@ export interface Course {
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   is_free?: boolean;
   content_count?: number;
-  rating?: number | null;
-  rating_count?: number;
+  testimonial_count?: number;
   category?: CourseCategory;
   benefits?: CourseBenefit[];
   course_sections?: CourseSection[];
@@ -161,7 +160,6 @@ export interface LearningData {
 export interface Testimonial {
   id: number;
   quote: string;
-  rating?: number;
   outcome?: string;
   is_verified: boolean;
   user?: {

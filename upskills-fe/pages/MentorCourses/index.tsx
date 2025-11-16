@@ -52,7 +52,16 @@ const MentorCourses: React.FC = () => {
       const isMentor = roleNames.includes("mentor");
 
       if (!isMentor) {
-        toast.error("Only mentors can access this page");
+        // Debug log to help troubleshoot
+        if (process.env.NODE_ENV === "development") {
+          console.log("User roles:", user.roles);
+          console.log("Role names:", roleNames);
+          console.log("Is mentor:", isMentor);
+        }
+        toast.error(
+          "Only mentors can access this page. Your current role: " +
+            (roleNames.length > 0 ? roleNames.join(", ") : "none")
+        );
         navigate("/");
       }
     } else if (!isAuthenticated) {
@@ -504,79 +513,87 @@ const MentorCourses: React.FC = () => {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="bg-brand-dark border border-slate-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-blue-500/20 transition-shadow"
+                className="bg-brand-dark border border-slate-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-blue-500/20 transition-shadow flex flex-col"
               >
-                <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={getCourseThumbnailUrl(course.thumbnail)}
-                    alt={course.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src =
-                        "https://via.placeholder.com/400x225?text=No+Image";
-                    }}
-                  />
-                  <div className="absolute top-2 right-2 flex gap-2">
-                    {course.is_free && (
-                      <span className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
-                        Free
-                      </span>
-                    )}
-                    {course.is_populer && (
-                      <span className="px-3 py-1 bg-yellow-500 text-yellow-900 text-xs font-bold rounded-full">
-                        Popular
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
-                    {course.name}
-                  </h3>
-                  <p className="text-slate-400 text-sm mb-4 line-clamp-2">
-                    {course.about}
-                  </p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        course.difficulty === "beginner"
-                          ? "bg-green-600 text-white"
-                          : course.difficulty === "intermediate"
-                          ? "bg-yellow-500 text-yellow-900"
-                          : "bg-red-600 text-white"
-                      }`}
-                    >
-                      {course.difficulty?.charAt(0).toUpperCase() +
-                        course.difficulty?.slice(1)}
-                    </span>
-                    <span className="text-slate-400 text-sm">
-                      {course.category?.name}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Link
-                      to={`/mentor/courses/${course.id}/content`}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <BookOpenIcon className="h-4 w-4" />
-                      Manage Content
-                    </Link>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(course)}
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(course.id, course.name)}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                <Link
+                  to={`/courses/${course.slug}`}
+                  className="flex-1 flex flex-col cursor-pointer"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={getCourseThumbnailUrl(course.thumbnail)}
+                      alt={course.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src =
+                          "https://via.placeholder.com/400x225?text=No+Image";
+                      }}
+                    />
+                    <div className="absolute top-2 right-2 flex gap-2">
+                      {course.is_free && (
+                        <span className="px-3 py-1 bg-green-600 text-white text-xs font-bold rounded-full">
+                          Free
+                        </span>
+                      )}
+                      {course.is_populer && (
+                        <span className="px-3 py-1 bg-yellow-500 text-yellow-900 text-xs font-bold rounded-full">
+                          Popular
+                        </span>
+                      )}
                     </div>
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+                      {course.name}
+                    </h3>
+                    <p className="text-slate-400 text-sm mb-4 line-clamp-2">
+                      {course.about}
+                    </p>
+                    <div className="flex items-center justify-between mb-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          course.difficulty === "beginner"
+                            ? "bg-green-600 text-white"
+                            : course.difficulty === "intermediate"
+                            ? "bg-yellow-500 text-yellow-900"
+                            : "bg-red-600 text-white"
+                        }`}
+                      >
+                        {course.difficulty?.charAt(0).toUpperCase() +
+                          course.difficulty?.slice(1)}
+                      </span>
+                      <span className="text-slate-400 text-sm">
+                        {course.category?.name}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+                <div
+                  className="px-6 pb-6 flex flex-col gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Link
+                    to={`/mentor/courses/${course.id}/content`}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <BookOpenIcon className="h-4 w-4" />
+                    Manage Content
+                  </Link>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEdit(course)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(course.id, course.name)}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>

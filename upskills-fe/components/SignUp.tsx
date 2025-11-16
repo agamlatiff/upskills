@@ -253,7 +253,7 @@ const SignUp: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
 
         console.log('Form submitted successfully:', formData);
-        setSubmitMessage('Account created successfully! Welcome to Upskill.');
+        setSubmitMessage('Account created successfully! Welcome to Upskills.');
         setIsSubmitting(false);
     };
     
@@ -284,7 +284,7 @@ const SignUp: React.FC = () => {
                 <div className="max-w-xl mx-auto">
                     <div className="text-center mb-10">
                         <h1 className="text-4xl font-extrabold text-white">Create Your Account</h1>
-                        <p className="mt-4 text-lg text-slate-400">Start your journey with Upskill today.</p>
+                        <p className="mt-4 text-lg text-slate-400">Start your journey with Upskills today.</p>
                     </div>
 
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl shadow-blue-500/10">
@@ -513,7 +513,7 @@ const SignUp: React.FC = () => {
                         <div className="p-6 overflow-y-auto space-y-4 text-slate-300">
                             <p className="font-semibold">Last Updated: {new Date().toLocaleDateString()}</p>
                             <p>
-                                Welcome to Upskill! These Terms of Service ("Terms") govern your use of the Upskill website, courses, and services (collectively, the "Services"). By accessing or using our Services, you agree to be bound by these Terms.
+                                Welcome to Upskills! These Terms of Service ("Terms") govern your use of the Upskills website, courses, and services (collectively, the "Services"). By accessing or using our Services, you agree to be bound by these Terms.
                             </p>
                             <h3 className="text-lg font-bold text-white pt-2">1. Account Registration</h3>
                             <p>
@@ -521,11 +521,11 @@ const SignUp: React.FC = () => {
                             </p>
                             <h3 className="text-lg font-bold text-white pt-2">2. Use of Services</h3>
                             <p>
-                                Upskill grants you a limited, non-exclusive, non-transferable, and revocable license to use the Services for your personal, non-commercial learning purposes. You agree not to use the Services for any unlawful purpose or in any way that interrupts, damages, or impairs the service.
+                                Upskills grants you a limited, non-exclusive, non-transferable, and revocable license to use the Services for your personal, non-commercial learning purposes. You agree not to use the Services for any unlawful purpose or in any way that interrupts, damages, or impairs the service.
                             </p>
                             <h3 className="text-lg font-bold text-white pt-2">3. Content and Intellectual Property</h3>
                             <p>
-                                All content provided through the Services, including but not limited to course materials, videos, text, and graphics, is the property of Upskill or its licensors and is protected by copyright and other intellectual property laws. You may not reproduce, redistribute, or create derivative works from any content without our express written permission.
+                                All content provided through the Services, including but not limited to course materials, videos, text, and graphics, is the property of Upskills or its licensors and is protected by copyright and other intellectual property laws. You may not reproduce, redistribute, or create derivative works from any content without our express written permission.
                             </p>
                             <h3 className="text-lg font-bold text-white pt-2">4. User Conduct</h3>
                             <p>

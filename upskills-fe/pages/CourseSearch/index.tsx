@@ -28,8 +28,7 @@ const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
     category: apiCourse.category?.name || 'Uncategorized',
     difficulty: difficulty,
     duration: `${apiCourse.content_count || 0} lessons`,
-    rating: apiCourse.rating || 0,
-    students: apiCourse.rating_count || 0,
+    students: apiCourse.testimonial_count || 0,
     price: 0, // Not provided by API
     isFree: apiCourse.is_free || false,
     popular: apiCourse.is_populer || false,

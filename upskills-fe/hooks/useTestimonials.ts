@@ -46,9 +46,8 @@ export const useTestimonials = (params?: UseTestimonialsParams) => {
 
   const createTestimonial = async (testimonialData: {
     quote: string;
-    rating?: number;
     outcome?: string;
-    course_id?: number;
+    course_id: number;
   }) => {
     try {
       const response = await apiClient.post<Testimonial>('/testimonials', testimonialData);
@@ -62,9 +61,7 @@ export const useTestimonials = (params?: UseTestimonialsParams) => {
 
   const updateTestimonial = async (id: number, testimonialData: {
     quote?: string;
-    rating?: number;
     outcome?: string;
-    course_id?: number;
   }) => {
     try {
       const response = await apiClient.put<Testimonial>(`/testimonials/${id}`, testimonialData);

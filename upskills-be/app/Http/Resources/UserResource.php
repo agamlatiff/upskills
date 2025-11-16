@@ -25,9 +25,15 @@ class UserResource extends JsonResource
             'has_active_subscription' => $this->when($request->user(), function () {
                 return $this->hasActiveSubscription();
             }),
-            'roles' => $this->when($request->user(), function () {
-                return $this->getRoleNames();
-            }),
+            'roles' => $this->when($request->user() && $request->user()->id === $this->id, function () {
+                // Always include roles for authenticated user requesting their own data
+                // Load roles relationship if not already loaded
+                if (!$this->relationLoaded('roles')) {
+                    $this->load('roles');
+                }
+                // getRoleNames() returns a Collection, convert to array
+                return $this->getRoleNames()->toArray();
+            }, []),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

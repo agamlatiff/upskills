@@ -217,7 +217,7 @@ const Courses: React.FC = () => {
                             </div>
                         </label>
                          <label htmlFor="free" className="flex items-center cursor-pointer group">
-                            <SparklesIcon className={`h-5 w-5 mr-2 transition-colors ${freeFilter ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
+                            <SparklesIcon className={`h-5 w-5 mr-2 transition-colors ${freeFilter ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                             <span className={`font-medium text-sm transition-colors mr-3 ${freeFilter ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                                 Free Only
                             </span>
@@ -229,7 +229,7 @@ const Courses: React.FC = () => {
                                     checked={freeFilter}
                                     onChange={(e) => setFreeFilter(e.target.checked)}
                                 />
-                                <div className="w-11 h-6 bg-slate-700 rounded-full peer-checked:bg-teal-600 transition-colors group-hover:bg-slate-600 peer-checked:group-hover:bg-teal-500"></div>
+                                <div className="w-11 h-6 bg-slate-700 rounded-full peer-checked:bg-blue-600 transition-colors group-hover:bg-slate-600 peer-checked:group-hover:bg-blue-500"></div>
                                 <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5"></div>
                             </div>
                         </label>

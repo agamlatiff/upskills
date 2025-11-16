@@ -95,13 +95,33 @@ const SignIn: React.FC = () => {
             }, 1000);
         } catch (error: any) {
             setIsSubmitting(false);
-            // Handle API validation errors
-            if (error.errors) {
+            
+            // Handle API validation errors (422)
+            if (error.errors && typeof error.errors === 'object') {
                 setApiErrors(error.errors);
-            } else {
-                setSubmitMessage(error.message || 'Login failed. Please check your credentials.');
+                // Set a general message if available
+                if (error.message && !error.message.includes('Request failed')) {
+                    setSubmitMessage(error.message);
+                } else {
+                    setSubmitMessage('Please correct the errors below and try again.');
+                }
+            } 
+            // Handle authentication failures
+            else if (error.message) {
+                // Check if it's a technical error message
+                if (error.message.includes('Request failed') || error.message.includes('status code')) {
+                    setSubmitMessage('Invalid email or password. Please check your credentials and try again.');
+                } else {
+                    setSubmitMessage(error.message);
+                }
+                // Clear API errors if it's a general error
+                setApiErrors({});
+            } 
+            // Fallback error message
+            else {
+                setSubmitMessage('Login failed. Please check your credentials and try again.');
+                setApiErrors({});
             }
-            setIsSubmitting(false);
         }
     };
     
@@ -182,9 +202,24 @@ const SignIn: React.FC = () => {
                                 ))}
                             </div>
                             
-                            {(submitMessage || authError) && (
-                                <div className={`p-4 text-center text-sm rounded-lg ${submitMessage.includes('successfully') || !authError ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                                    {submitMessage || authError}
+                            {/* Show general error message if no field-specific errors */}
+                            {submitMessage && Object.keys(apiErrors).length === 0 && (
+                                <div className={`p-4 text-center text-sm rounded-lg ${submitMessage.includes('successfully') ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                                    {submitMessage}
+                                </div>
+                            )}
+                            
+                            {/* Show auth error if no submit message */}
+                            {authError && !submitMessage && (
+                                <div className="p-4 text-center text-sm rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+                                    {authError}
+                                </div>
+                            )}
+                            
+                            {/* Show general validation error if we have field errors but no general message */}
+                            {Object.keys(apiErrors).length > 0 && !submitMessage && (
+                                <div className="p-4 text-center text-sm rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+                                    Please correct the errors below and try again.
                                 </div>
                             )}
 

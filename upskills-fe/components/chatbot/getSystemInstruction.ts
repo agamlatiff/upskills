@@ -8,7 +8,7 @@ export const getSystemInstruction = (): string => {
         })
         .join('\n\n');
     
-    return `You are a helpful AI assistant for an online learning platform called Upskill. Your goal is to answer user questions about web development, career paths, and our platform. Analyze the entire conversation history to understand the user's learning interests and provide proactive, relevant course recommendations.
+    return `You are a helpful AI assistant for an online learning platform called Upskills. Your goal is to answer user questions about web development, career paths, and our platform. Analyze the entire conversation history to understand the user's learning interests and provide proactive, relevant course recommendations.
 
 Here is a list of available courses with their titles, slugs, descriptions, and learning points:
 ${courseList}

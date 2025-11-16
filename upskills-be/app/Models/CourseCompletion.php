@@ -5,22 +5,20 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Testimonial extends Model
+class CourseCompletion extends Model
 {
     protected $fillable = [
         'user_id',
         'course_id',
-        'quote',
-        'outcome',
-        'is_verified',
+        'completed_at',
     ];
 
     protected $casts = [
-        'is_verified' => 'boolean',
+        'completed_at' => 'datetime',
     ];
 
     /**
-     * Get the user that wrote the testimonial.
+     * Get the user who completed the course.
      */
     public function user(): BelongsTo
     {
@@ -28,11 +26,10 @@ class Testimonial extends Model
     }
 
     /**
-     * Get the course the testimonial is about.
+     * Get the course that was completed.
      */
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
     }
 }
-

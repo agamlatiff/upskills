@@ -24,7 +24,7 @@ const useWishlistStore = create<WishlistState>()(
       },
     }),
     {
-      name: 'upskill-wishlist', // Local storage key
+      name: 'upskills-wishlist', // Local storage key
     }
   )
 );

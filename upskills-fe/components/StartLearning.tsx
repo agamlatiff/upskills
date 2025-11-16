@@ -18,7 +18,7 @@ const StartLearning: React.FC = () => {
     const [parsedContent, setParsedContent] = useState('');
     const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
 
-    const progressKey = `upskill-progress-${course?.slug}`;
+    const progressKey = `upskills-progress-${course?.slug}`;
 
     useEffect(() => {
         try {

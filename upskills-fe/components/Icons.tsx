@@ -25,8 +25,8 @@ export const CrownIcon: React.FC<IconProps> = (props) => (
 );
 
 export const StarIcon: React.FC<IconProps> = (props) => (
-  <svg {...props} viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M10.868 2.884c.321-.662 1.24-.662 1.561 0l1.825 3.778a.75.75 0 00.563.41l4.167.605c.732.106 1.023.998.494 1.509l-3.015 2.938a.75.75 0 00-.215.664l.712 4.15c.125.728-.638 1.283-1.296.941l-3.727-1.96a.75.75 0 00-.702 0l-3.727 1.96c-.658.342-1.421-.213-1.296-.941l.712-4.15a.75.75 0 00-.215-.664L.93 9.186c-.53-.51-.238-1.403.494-1.51l4.167-.605a.75.75 0 00.563-.41l1.825-3.778z" clipRule="evenodd" />
+  <svg {...props} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2L14.5 8.5L21.5 9.5L16.5 14L18 21L12 17.5L6 21L7.5 14L2.5 9.5L9.5 8.5L12 2Z" fillRule="evenodd" clipRule="evenodd"/>
   </svg>
 );
 

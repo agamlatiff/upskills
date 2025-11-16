@@ -26,8 +26,8 @@ export const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testim
                 </div>
                 {testimonial.is_verified && (
                     <div className="flex-shrink-0">
-                        <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-teal">
-                            <CheckBadgeIcon className="h-5 w-5" />
+                        <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-500">
+                            <CheckBadgeIcon className="h-5 w-5 text-blue-500" />
                             Verified
                         </div>
                     </div>
@@ -48,7 +48,7 @@ export const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testim
                 <div className="mt-2">
                     <Link 
                         to={`/courses/${testimonial.course.slug}`}
-                        className="text-brand-teal hover:text-brand-teal/80 text-sm font-medium"
+                        className="text-blue-500 hover:text-blue-400 text-sm font-medium"
                     >
                         View Course: {testimonial.course.name} →
                     </Link>

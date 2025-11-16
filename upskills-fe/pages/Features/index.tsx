@@ -45,7 +45,7 @@ const Features: React.FC = () => {
             {/* Left Column */}
             <div className="text-left">
                 <h2 className="text-4xl sm:text-5xl font-extrabold text-white mb-6">
-                Why Choose Upskill
+                Why Choose Upskills
                 </h2>
                 <p className="text-lg text-slate-300 max-w-lg mb-8">
                 A structured, guided, and hands-on learning experience designed to get you job-ready faster.

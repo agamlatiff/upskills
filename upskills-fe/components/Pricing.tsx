@@ -131,7 +131,7 @@ const Pricing: React.FC = () => {
             </div>
 
             <div className="mt-12 text-center text-sm text-slate-400">
-                <p>Join thousands of learners building their tech careers with Upskill. Start free—upgrade anytime.</p>
+                <p>Join thousands of learners building their tech careers with Upskills. Start free—upgrade anytime.</p>
             </div>
         </div>
         </section>

@@ -18,7 +18,36 @@ class CheckSubscription
     {
         $user = Auth::user();
 
-        if (!$user || !$user->hasActiveSubscription()) {
+        if (!$user) {
+            // Return JSON response for API requests
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'You need to be authenticated to proceed.',
+                    'error' => 'authentication_required'
+                ], 401);
+            }
+
+            // Return redirect for web requests
+            return redirect()->route("front.pricing")->with("error", "You need to be authenticated to proceed.");
+        }
+
+        // Check if user is a mentor and owns the course
+        $course = $request->route('course');
+        
+        if ($course && $user->hasRole('mentor')) {
+            // Check if mentor created/owns this course
+            $isMentorOfCourse = $course->courseMentors()
+                ->where('user_id', $user->id)
+                ->exists();
+            
+            if ($isMentorOfCourse) {
+                // Mentor owns the course, allow access without subscription
+                return $next($request);
+            }
+        }
+
+        // For non-mentor-owned courses or non-mentors, check subscription
+        if (!$user->hasActiveSubscription()) {
             // Return JSON response for API requests
             if ($request->expectsJson() || $request->is('api/*')) {
                 return response()->json([

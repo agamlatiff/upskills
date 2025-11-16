@@ -52,7 +52,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth:sanctum')->group(function () {
     // User profile
     Route::get('/user', function (Request $request) {
-        return $request->user();
+        return new \App\Http\Resources\UserResource($request->user());
     });
     
     Route::get('/profile', [ProfileController::class, 'edit'])->name('api.profile.show');
@@ -73,6 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('api.logout');
+    
+    // Course Completions
+    Route::post('/courses/{course}/complete', [\App\Http\Controllers\CourseCompletionController::class, 'store'])->name('api.courses.complete');
+    Route::get('/courses/{course}/completion-status', [\App\Http\Controllers\CourseCompletionController::class, 'check'])->name('api.courses.completion-status');
+    Route::get('/user/completed-courses', [\App\Http\Controllers\CourseCompletionController::class, 'index'])->name('api.user.completed-courses');
     
     // Testimonials
     Route::post('/testimonials', [TestimonialController::class, 'store'])->name('api.testimonials.store');
@@ -104,6 +109,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/mentor/courses/{course}/sections/{section}/contents/{content}', [\App\Http\Controllers\MentorSectionContentController::class, 'destroy'])->name('api.mentor.sections.contents.destroy');
     });
     
+    // Course learning routes (accessible by both students and mentors)
+    // check.subscription middleware will handle mentor-owned course bypass
+    Route::middleware('check.subscription')->group(function () {
+        Route::post('/dashboard/join/{course:slug}', [CourseController::class, 'join'])->name('api.dashboard.courses.join');
+        Route::get('/dashboard/learning/{course:slug}/{courseSection}/{sectionContent}', [CourseController::class, 'learning'])->name('api.dashboard.courses.learning');
+        Route::get('/dashboard/learning/{course:slug}/finished', [CourseController::class, 'learning_finished'])->name('api.dashboard.courses.learning.finished');
+    });
+    
     // Student routes
     Route::middleware('role:student')->group(function () {
         // Dashboard courses
@@ -119,12 +132,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/checkout/{pricing}', [FrontController::class, 'checkout'])->name('api.checkout');
         Route::get('/checkout/success', [FrontController::class, 'checkoutSuccess'])->name('api.checkout.success');
         Route::post('/payment/midtrans', [FrontController::class, 'paymentStoreMidtrans'])->name('api.payment.midtrans');
-        
-        // Course learning (requires active subscription)
-        Route::middleware('check.subscription')->group(function () {
-            Route::post('/dashboard/join/{course:slug}', [CourseController::class, 'join'])->name('api.dashboard.courses.join');
-            Route::get('/dashboard/learning/{course:slug}/{courseSection}/{sectionContent}', [CourseController::class, 'learning'])->name('api.dashboard.courses.learning');
-            Route::get('/dashboard/learning/{course:slug}/finished', [CourseController::class, 'learning_finished'])->name('api.dashboard.courses.learning.finished');
-        });
     });
 });

@@ -37,7 +37,7 @@ const CareerSupport: React.FC = () => {
               Career Support That Gets You Job-Ready
             </h2>
             <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-lg text-slate-300 leading-relaxed">
-              Beyond learning—Upskill provides personal guidance, career tools, and networking opportunities to help you land your next role. You won’t navigate your career alone.
+              Beyond learning—Upskills provides personal guidance, career tools, and networking opportunities to help you land your next role. You won’t navigate your career alone.
             </p>
             <div className="mt-10">
               <Link to="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">

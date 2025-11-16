@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCourse } from "../../hooks/useCourses";
 import { useWishlist } from "../../hooks/useWishlist";
 import { useAuth } from "../../hooks/useAuth";
+import { useTestimonials } from "../../hooks/useTestimonials";
 import RequireAuth from "../../components/RequireAuth";
 import useToastStore from "../../store/toastStore";
 import apiClient from "../../utils/api";
@@ -13,13 +14,14 @@ import {
 import {
   StarIcon,
   CheckBadgeIcon,
-  VideoCameraIcon,
+  BookOpenIcon,
   PlayIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ChevronRightIcon,
   HeartIcon,
 } from "../../components/Icons";
+import { TestimonialCard } from "../../components/TestimonialCard";
 
 const CourseDetail: React.FC = () => {
   const { courseSlug } = useParams<{ courseSlug: string }>();
@@ -28,6 +30,11 @@ const CourseDetail: React.FC = () => {
   const { course, loading, error } = useCourse(courseSlug || "");
   const { isWishlisted, toggleWishlist } = useWishlist();
   const toast = useToastStore();
+  const { testimonials: courseTestimonials, loading: testimonialsLoading } = useTestimonials({
+    courseId: course?.id,
+    verified: true,
+    limit: 50,
+  });
   const [activeTab, setActiveTab] = useState<
     "about" | "lessons" | "testimonials" | "portfolios" | "rewards"
   >("about");
@@ -37,6 +44,27 @@ const CourseDetail: React.FC = () => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [courseSlug]);
+
+  // Check if mentor is trying to access another mentor's course
+  useEffect(() => {
+    if (course && isAuthenticated && user) {
+      const userRoles = Array.isArray(user.roles) ? user.roles : [];
+      const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
+      const isMentor = roleNames.includes('mentor');
+      
+      if (isMentor && course.course_mentors) {
+        // Check if current user is NOT the owner of this course
+        const isMentorOwnedCourse = course.course_mentors.some((cm: any) => 
+          cm.mentor && cm.mentor.id === user?.id
+        );
+        
+        if (!isMentorOwnedCourse) {
+          toast.error("You can only access courses that you created. Please go to 'My Courses' to manage your own courses.");
+          navigate("/mentor/courses");
+        }
+      }
+    }
+  }, [course, isAuthenticated, user, navigate, toast]);
 
   const handleJoinCourse = async () => {
     // Step 1: Check if user is authenticated
@@ -48,12 +76,28 @@ const CourseDetail: React.FC = () => {
       return;
     }
 
-    // Step 2: Check if user has active subscription
-    if (!user?.has_active_subscription) {
+    // Step 2: Check if user is a mentor who owns this course
+    const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+    const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
+    const isMentor = roleNames.includes('mentor');
+    
+    let isMentorOwnedCourse = false;
+    if (isMentor && course?.course_mentors) {
+      // Check if current user is in the course mentors list
+      isMentorOwnedCourse = course.course_mentors.some((cm: any) => 
+        cm.mentor && cm.mentor.id === user?.id
+      );
+    }
+
+    // Step 3: Check subscription only if not mentor-owned course
+    // Mentor-owned courses can proceed without subscription check - backend will handle it
+    if (!isMentorOwnedCourse && !user?.has_active_subscription) {
       toast.error("You need an active subscription to start learning");
       navigate("/pricing");
       return;
     }
+    
+    // If mentor owns the course, allow them to proceed even without subscription
 
     if (!courseSlug) return;
 
@@ -280,7 +324,7 @@ const CourseDetail: React.FC = () => {
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <VideoCameraIcon className="h-5 w-5 text-slate-400" />
+                    <BookOpenIcon className="h-5 w-5 text-slate-400" />
                     <span className="text-slate-300">
                       {course.content_count || totalLessons} Lessons
                     </span>
@@ -293,13 +337,22 @@ const CourseDetail: React.FC = () => {
                     disabled={isJoining}
                     className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-full hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isJoining
-                      ? "Starting..."
-                      : isAuthenticated && user?.has_active_subscription
-                      ? "Start Learning Now"
-                      : isAuthenticated
-                      ? "Subscribe to Learn"
-                      : "Sign In to Start Learning"}
+                    {(() => {
+                      if (isJoining) return "Starting...";
+                      if (!isAuthenticated) return "Sign In to Start Learning";
+                      
+                      // Check if user is mentor who owns this course
+                      const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+                      const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
+                      const isMentor = roleNames.includes('mentor');
+                      const isMentorOwnedCourse = isMentor && course?.course_mentors?.some((cm: any) => 
+                        cm.mentor && cm.mentor.id === user?.id
+                      );
+                      
+                      if (isMentorOwnedCourse) return "Start Learning Now";
+                      if (user?.has_active_subscription) return "Start Learning Now";
+                      return "Subscribe to Learn";
+                    })()}
                   </button>
                   <button
                     onClick={handleToggleWishlist}
@@ -386,7 +439,7 @@ const CourseDetail: React.FC = () => {
                             key={benefit.id || index}
                             className="flex items-start gap-3"
                           >
-                            <CheckBadgeIcon className="h-6 w-6 text-brand-teal flex-shrink-0 mt-0.5" />
+                            <CheckBadgeIcon className="h-6 w-6 text-blue-500 flex-shrink-0 mt-0.5" />
                             <span className="text-slate-300">
                               {benefit.name || benefit.benefit}
                             </span>
@@ -498,7 +551,7 @@ const CourseDetail: React.FC = () => {
                                 key={content.id}
                                 className="flex items-center gap-3 py-2 text-slate-300"
                               >
-                                <VideoCameraIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
+                                <BookOpenIcon className="h-5 w-5 text-slate-500 flex-shrink-0" />
                                 <span>{content.name}</span>
                               </div>
                             ))}
@@ -513,12 +566,36 @@ const CourseDetail: React.FC = () => {
               {/* Testimonials Tab */}
               {activeTab === "testimonials" && (
                 <div>
-                  <h2 className="text-2xl font-bold text-white mb-4">
-                    Student Testimonials
-                  </h2>
-                  <p className="text-slate-400">
-                    No testimonials available yet.
-                  </p>
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-white">
+                      Student Testimonials
+                    </h2>
+                    {courseTestimonials.length > 0 && (
+                      <span className="text-slate-400 text-sm">
+                        {courseTestimonials.length} {courseTestimonials.length === 1 ? 'testimonial' : 'testimonials'}
+                      </span>
+                    )}
+                  </div>
+                  
+                  {testimonialsLoading ? (
+                    <div className="text-center py-12">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                      <p className="text-slate-400 mt-4">Loading testimonials...</p>
+                    </div>
+                  ) : courseTestimonials.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-800/50 rounded-xl border border-slate-700">
+                      <p className="text-slate-400 text-lg mb-2">No testimonials yet</p>
+                      <p className="text-slate-500 text-sm">
+                        Be the first to share your experience after completing this course!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {courseTestimonials.map((testimonial) => (
+                        <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

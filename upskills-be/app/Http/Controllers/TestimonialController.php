@@ -35,28 +35,50 @@ class TestimonialController extends Controller
 
     /**
      * Store a newly created testimonial.
+     * Requires: User must have completed the course
      */
     public function store(Request $request)
     {
+        $user = Auth::user();
+        
         $validated = $request->validate([
-            'quote' => ['required', 'string', 'max:1000'],
-            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'quote' => ['required', 'string', 'min:10', 'max:1000'],
             'outcome' => ['nullable', 'string', 'max:255'],
-            'course_id' => ['nullable', 'exists:courses,id'],
+            'course_id' => ['required', 'exists:courses,id'],
         ]);
 
+        // Check if user has completed the course
+        if (!$user->hasCompletedCourse($validated['course_id'])) {
+            return response()->json([
+                'message' => 'You must complete the course before leaving a testimonial.'
+            ], 403);
+        }
+
+        // Check if user already left a testimonial for this course
+        $existingTestimonial = Testimonial::where('user_id', $user->id)
+            ->where('course_id', $validated['course_id'])
+            ->first();
+
+        if ($existingTestimonial) {
+            return response()->json([
+                'message' => 'You have already left a testimonial for this course. You can update your existing testimonial instead.'
+            ], 422);
+        }
+
         $testimonial = Testimonial::create([
-            'user_id' => Auth::id(),
-            'course_id' => $validated['course_id'] ?? null,
+            'user_id' => $user->id,
+            'course_id' => $validated['course_id'],
             'quote' => $validated['quote'],
-            'rating' => $validated['rating'] ?? null,
             'outcome' => $validated['outcome'] ?? null,
             'is_verified' => false,
         ]);
 
         $testimonial->load(['user', 'course']);
 
-        return new TestimonialResource($testimonial);
+        return response()->json([
+            'message' => 'Testimonial created successfully',
+            'testimonial' => new TestimonialResource($testimonial),
+        ], 201);
     }
 
     /**
@@ -70,10 +92,8 @@ class TestimonialController extends Controller
         }
 
         $validated = $request->validate([
-            'quote' => ['sometimes', 'string', 'max:1000'],
-            'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'quote' => ['sometimes', 'string', 'min:10', 'max:1000'],
             'outcome' => ['nullable', 'string', 'max:255'],
-            'course_id' => ['nullable', 'exists:courses,id'],
         ]);
 
         $testimonial->update($validated);

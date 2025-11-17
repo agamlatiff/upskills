@@ -21,9 +21,9 @@ UpSkills is a web platform designed to help users improve their abilities throug
 **Frontend**
 - React  
 - TypeScript  
-- Tailwind CSS (if included)  
+- Tailwind CSS 
 - Axios  
-- TanStack Query (if included)
+- TanStack Query
 
 **Backend**
 - Laravel  

@@ -46,6 +46,11 @@ class CheckSubscription
             }
         }
 
+        // Check if course is free - free courses don't require subscription
+        if ($course && $course->is_free) {
+            return $next($request);
+        }
+
         // For non-mentor-owned courses or non-mentors, check subscription
         if (!$user->hasActiveSubscription()) {
             // Return JSON response for API requests

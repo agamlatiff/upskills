@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import apiClient from '../utils/api';
 
 export const useCourseCompletion = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const markAsComplete = async (courseId: number) => {
+  const markAsComplete = useCallback(async (courseId: number) => {
     setLoading(true);
     setError(null);
     try {
@@ -18,7 +18,7 @@ export const useCourseCompletion = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const checkCompletion = async (courseId: number) => {
     setLoading(true);
@@ -50,10 +50,26 @@ export const useCourseCompletion = () => {
     }
   };
 
+  const deleteCompletion = useCallback(async (courseId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.delete(`/courses/${courseId}/complete`);
+      return response.data;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete course completion';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     markAsComplete,
     checkCompletion,
     getCompletedCourses,
+    deleteCompletion,
     loading,
     error,
   };

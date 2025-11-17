@@ -9,8 +9,10 @@ class TransactionObserver
 {
     
     public function creating($transaction) {
-        $transaction->booking_trx_id = TransactionHelper::generateUniqueTrxId();
-    
+        // Hanya set booking_trx_id jika belum di-set (untuk Midtrans payment yang sudah punya order_id)
+        if (empty($transaction->booking_trx_id)) {
+            $transaction->booking_trx_id = TransactionHelper::generateUniqueTrxId();
+        }
     }
     
     public function created(Transaction $transaction) : void {

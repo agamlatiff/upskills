@@ -65,12 +65,19 @@ class User extends Authenticatable implements FilamentUser
 
     public function getActiveSubscription()
     {
-        return $this->Transactions()->where("is_paid", true)->where("ended_at", ">=", now())->first();
+        return $this->Transactions()
+            ->where("is_paid", true)
+            ->where("ended_at", ">=", now())
+            ->orderBy("ended_at", "desc")
+            ->first();
     }
 
     public function hasActiveSubscription()
     {
-        return $this->Transactions()->where("is_paid", true)->where("ended_at", ">=", now())->exists();
+        return $this->Transactions()
+            ->where("is_paid", true)
+            ->where("ended_at", ">=", now())
+            ->exists();
     }
 
     public function courseCompletions(): HasMany

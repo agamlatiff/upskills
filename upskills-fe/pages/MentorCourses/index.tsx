@@ -52,12 +52,6 @@ const MentorCourses: React.FC = () => {
       const isMentor = roleNames.includes("mentor");
 
       if (!isMentor) {
-        // Debug log to help troubleshoot
-        if (process.env.NODE_ENV === "development") {
-          console.log("User roles:", user.roles);
-          console.log("Role names:", roleNames);
-          console.log("Is mentor:", isMentor);
-        }
         toast.error(
           "Only mentors can access this page. Your current role: " +
             (roleNames.length > 0 ? roleNames.join(", ") : "none")
@@ -76,7 +70,9 @@ const MentorCourses: React.FC = () => {
         const response = await apiClient.get<Category[]>("/categories");
         setCategories(response.data);
       } catch (err) {
-        console.error("Failed to fetch categories:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to fetch categories:", err);
+        }
       }
     };
     fetchCategories();

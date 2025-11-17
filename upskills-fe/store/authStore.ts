@@ -17,7 +17,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   clearError: () => void;
-  checkAuth: () => Promise<void>;
+  checkAuth: (force?: boolean) => Promise<void>;
 }
 
 interface RegisterData {
@@ -175,7 +175,9 @@ const useAuthStore = create<AuthState>()(
           }
         } catch (error) {
           // Even if logout fails on server, clear local state
-          console.error('Logout error:', error);
+          if (process.env.NODE_ENV === "development") {
+            console.error('Logout error:', error);
+          }
         } finally {
           // Clear local state
           localStorage.removeItem('auth_token');
@@ -206,31 +208,39 @@ const useAuthStore = create<AuthState>()(
         set({ error: null });
       },
 
-      checkAuth: async () => {
+      checkAuth: async (force = false) => {
         const token = localStorage.getItem('auth_token');
         if (!token) {
           set({ isAuthenticated: false, user: null, isLoading: false });
           return;
         }
 
-        // Don't check auth if we're on auth pages or public routes
-        const currentPath = window.location.pathname;
-        const authRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email'];
-        const publicRoutes = ['/', '/features', '/pricing', '/testimonials'];
-        
-        // Check if current path is a public route (including dynamic routes like /courses/:slug)
-        const isPublicRoute = publicRoutes.includes(currentPath) || currentPath.startsWith('/courses');
-        
-        if (authRoutes.includes(currentPath) || isPublicRoute) {
-          set({ isLoading: false });
-          return;
+        // If force is true, always check auth (used after checkout, etc.)
+        // But don't set isLoading to true when force=true to avoid blocking UI
+        if (!force) {
+          // Don't check auth if we're on auth pages or public routes
+          const currentPath = window.location.pathname;
+          const authRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email'];
+          const publicRoutes = ['/', '/features', '/pricing', '/testimonials'];
+          
+          // Check if current path is a public route (including dynamic routes like /courses/:slug)
+          const isPublicRoute = publicRoutes.includes(currentPath) || currentPath.startsWith('/courses');
+          
+          if (authRoutes.includes(currentPath) || isPublicRoute) {
+            set({ isLoading: false });
+            return;
+          }
+          
+          // Only set loading state for initial auth check, not for forced refresh
+          set({ isLoading: true });
         }
 
-        set({ isLoading: true });
         try {
           const response = await apiClient.get<User>('/user');
+          // Handle both wrapped and unwrapped responses
+          const userData = (response.data as any)?.data || response.data;
           set({
-            user: response.data,
+            user: userData,
             token,
             isAuthenticated: true,
             isLoading: false,
@@ -238,8 +248,11 @@ const useAuthStore = create<AuthState>()(
         } catch (error: any) {
           // Token is invalid or expired, clear auth state silently
           // Don't show error if we're on auth pages or public routes
-          const isAuthRoute = authRoutes.includes(window.location.pathname);
-          const isPublic = publicRoutes.includes(window.location.pathname) || window.location.pathname.startsWith('/courses');
+          const currentPath = window.location.pathname;
+          const authRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email'];
+          const publicRoutes = ['/', '/features', '/pricing', '/testimonials'];
+          const isAuthRoute = authRoutes.includes(currentPath);
+          const isPublic = publicRoutes.includes(currentPath) || currentPath.startsWith('/courses');
           
           if (error.response?.status === 401 && !isAuthRoute && !isPublic) {
             // Only clear silently, interceptor will handle the redirect for protected routes

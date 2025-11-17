@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { LogoIcon, MenuIcon, XIcon, HeartIcon } from "./Icons";
-import { useWishlist } from "../hooks/useWishlist";
+import { LogoIcon, MenuIcon, XIcon } from "./Icons";
 import { useAuth } from "../hooks/useAuth";
 import { getProfilePhotoUrl } from "../utils/imageUrl";
 
@@ -19,17 +18,8 @@ const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { wishlist } = useWishlist();
-  const { isAuthenticated, user, logout, checkAuth } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
-
-  // Debug: Log user roles in development
-  React.useEffect(() => {
-    if (process.env.NODE_ENV === "development" && user) {
-      console.log("Header - User roles:", user.roles);
-      console.log("Header - User object:", user);
-    }
-  }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -48,7 +38,7 @@ const Header: React.FC = () => {
   return (
     <header className="bg-brand-dark/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-800">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative flex items-center h-20">
+        <div className="relative flex items-center h-20 justify-between lg:justify-start">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="flex items-center gap-2">
@@ -68,18 +58,6 @@ const Header: React.FC = () => {
 
           {/* Desktop Action Buttons */}
           <div className="hidden lg:flex items-center space-x-4 ml-auto">
-            <Link
-              to="/wishlist"
-              className="relative text-slate-300 hover:text-blue-400 transition-colors p-2"
-              aria-label={`Wishlist, ${wishlist.length} items`}
-            >
-              <HeartIcon className="h-6 w-6" />
-              {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold ring-2 ring-brand-dark">
-                  {wishlist.length}
-                </span>
-              )}
-            </Link>
             {isAuthenticated ? (
               <>
                 <Link
@@ -89,7 +67,12 @@ const Header: React.FC = () => {
                   Dashboard
                 </Link>
                 <div className="relative group">
-                  <button className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-blue-400 transition-colors">
+                  <button
+                    className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-blue-400 transition-colors"
+                    aria-label={`User menu for ${user?.name}`}
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                  >
                     <span>{user?.name}</span>
                     {user?.photo ? (
                       <img
@@ -113,6 +96,12 @@ const Header: React.FC = () => {
                       >
                         Profile
                       </Link>
+                      <Link
+                        to="/dashboard/subscriptions"
+                        className="block px-4 py-2 text-slate-300 hover:bg-slate-700"
+                      >
+                        My Subscriptions
+                      </Link>
                       {(() => {
                         // Check if user has mentor role
                         const userRoles = user?.roles || [];
@@ -124,18 +113,6 @@ const Header: React.FC = () => {
                             typeof r === "string" ? r : r?.name || "";
                           return roleName === "mentor";
                         });
-
-                        // Debug in development
-                        if (process.env.NODE_ENV === "development") {
-                          console.log(
-                            "Header dropdown - User roles:",
-                            userRoles
-                          );
-                          console.log(
-                            "Header dropdown - Has mentor role:",
-                            hasMentorRole
-                          );
-                        }
 
                         return hasMentorRole;
                       })() && (
@@ -179,8 +156,12 @@ const Header: React.FC = () => {
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              aria-label={isMenuOpen ? "Close main menu" : "Open main menu"}
+              aria-expanded={isMenuOpen}
             >
-              <span className="sr-only">Open main menu</span>
+              <span className="sr-only">
+                {isMenuOpen ? "Close main menu" : "Open main menu"}
+              </span>
               {isMenuOpen ? (
                 <XIcon className="h-6 w-6" />
               ) : (
@@ -193,7 +174,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="lg:hidden absolute top-20 left-0 w-full bg-brand-dark shadow-lg border-t border-slate-800">
+        <div className="lg:hidden absolute  top-20 left-0 w-full bg-brand-dark shadow-lg border-t border-slate-800">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {navLinks.map((link) => (
               <Link
@@ -205,19 +186,6 @@ const Header: React.FC = () => {
                 {link.label}
               </Link>
             ))}
-            <Link
-              to="/wishlist"
-              onClick={() => setIsMenuOpen(false)}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-slate-200 hover:text-blue-400 hover:bg-slate-800/50"
-            >
-              <HeartIcon className="h-6 w-6" />
-              <span>Wishlist</span>
-              {wishlist.length > 0 && (
-                <span className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">
-                  {wishlist.length}
-                </span>
-              )}
-            </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-slate-800">
             <div className="px-5 flex flex-col space-y-3">
@@ -236,6 +204,13 @@ const Header: React.FC = () => {
                     className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
                   >
                     Profile
+                  </Link>
+                  <Link
+                    to="/dashboard/subscriptions"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full text-center px-5 py-2 text-slate-300 border border-slate-700 rounded-full hover:bg-slate-800 transition-colors"
+                  >
+                    My Subscriptions
                   </Link>
                   {(() => {
                     // Check if user has mentor role

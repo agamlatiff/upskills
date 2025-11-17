@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCourse } from "../../hooks/useCourses";
-import { useWishlist } from "../../hooks/useWishlist";
 import { useAuth } from "../../hooks/useAuth";
 import { useTestimonials } from "../../hooks/useTestimonials";
+import { useCourseCompletion } from "../../hooks/useCourseCompletion";
+import { useSubscriptions } from "../../hooks/useSubscriptions";
 import RequireAuth from "../../components/RequireAuth";
 import useToastStore from "../../store/toastStore";
 import apiClient from "../../utils/api";
@@ -14,36 +15,81 @@ import {
 import {
   StarIcon,
   CheckBadgeIcon,
+  CheckCircleIcon,
   BookOpenIcon,
   PlayIcon,
   ChevronDownIcon,
   ChevronUpIcon,
   ChevronRightIcon,
-  HeartIcon,
 } from "../../components/Icons";
 import { TestimonialCard } from "../../components/TestimonialCard";
 
 const CourseDetail: React.FC = () => {
   const { courseSlug } = useParams<{ courseSlug: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, checkAuth } = useAuth();
   const { course, loading, error } = useCourse(courseSlug || "");
-  const { isWishlisted, toggleWishlist } = useWishlist();
+  const { checkCompletion } = useCourseCompletion();
+  const { subscriptions } = useSubscriptions();
   const toast = useToastStore();
   const { testimonials: courseTestimonials, loading: testimonialsLoading } = useTestimonials({
     courseId: course?.id,
     verified: true,
     limit: 50,
   });
+  
+  // Check if user has active subscription from subscriptions list
+  const hasActiveSubscription = useMemo(() => {
+    // If not authenticated, no subscription
+    if (!isAuthenticated) {
+      return false;
+    }
+    
+    // If we have subscriptions list, check for active subscription
+    if (subscriptions && subscriptions.length > 0) {
+      const activeSubscription = subscriptions.find((sub: any) => {
+        if (!sub.is_paid) return false;
+        const endedAt = new Date(sub.ended_at);
+        const now = new Date();
+        return endedAt > now;
+      });
+      
+      if (activeSubscription) {
+        return true;
+      }
+    }
+    
+    // Fallback to user's has_active_subscription from API
+    return user?.has_active_subscription || false;
+  }, [subscriptions, user?.has_active_subscription, isAuthenticated]);
   const [activeTab, setActiveTab] = useState<
     "about" | "lessons" | "testimonials" | "portfolios" | "rewards"
   >("about");
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [isJoining, setIsJoining] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [courseSlug]);
+
+  // Refresh user data when component mounts or course changes to ensure subscription status is up-to-date
+  useEffect(() => {
+    if (isAuthenticated && course) {
+      checkAuth();
+    }
+  }, [isAuthenticated, course?.id, checkAuth]);
+
+  // Check completion status
+  useEffect(() => {
+    if (course?.id && isAuthenticated) {
+      checkCompletion(course.id).then((completed) => {
+        setIsCompleted(completed);
+      }).catch(() => {
+        setIsCompleted(false);
+      });
+    }
+  }, [course?.id, isAuthenticated, checkCompletion]);
 
   // Check if mentor is trying to access another mentor's course
   useEffect(() => {
@@ -76,28 +122,27 @@ const CourseDetail: React.FC = () => {
       return;
     }
 
-    // Step 2: Check if user is a mentor who owns this course
-    const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
-    const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
-    const isMentor = roleNames.includes('mentor');
-    
-    let isMentorOwnedCourse = false;
-    if (isMentor && course?.course_mentors) {
-      // Check if current user is in the course mentors list
-      isMentorOwnedCourse = course.course_mentors.some((cm: any) => 
-        cm.mentor && cm.mentor.id === user?.id
-      );
-    }
+    // Step 2: Check if course is free - free courses don't require subscription
+    if (course?.is_free) {
+      // Free courses can proceed without subscription check
+    } else {
+      // Step 3: Check if user is a mentor who owns this course
+      const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
+      const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
+      const isMentor = roleNames.includes('mentor');
+      
+      let isMentorOwnedCourse = false;
+      if (isMentor && course?.course_mentors) {
+        // Check if current user is in the course mentors list
+        isMentorOwnedCourse = course.course_mentors.some((cm: any) => 
+          cm.mentor && cm.mentor.id === user?.id
+        );
+      }
 
-    // Step 3: Check subscription only if not mentor-owned course
-    // Mentor-owned courses can proceed without subscription check - backend will handle it
-    if (!isMentorOwnedCourse && !user?.has_active_subscription) {
-      toast.error("You need an active subscription to start learning");
-      navigate("/pricing");
-      return;
+      // Step 4: Skip frontend subscription check - let backend handle it
+      // Backend middleware will check subscription and return proper error if needed
+      // This prevents issues where frontend user data might be stale
     }
-    
-    // If mentor owns the course, allow them to proceed even without subscription
 
     if (!courseSlug) return;
 
@@ -105,6 +150,10 @@ const CourseDetail: React.FC = () => {
     try {
       const response = await apiClient.post(`/dashboard/join/${courseSlug}`);
       toast.success("Successfully joined the course!");
+      
+      // Refresh user data to update subscription status
+      checkAuth();
+      
       // Redirect to success page or directly to learning
       const firstSectionId = response.data.first_section_id;
       const firstContentId = response.data.first_content_id;
@@ -130,24 +179,6 @@ const CourseDetail: React.FC = () => {
         );
       }
       setIsJoining(false);
-    }
-  };
-
-  const handleToggleWishlist = async () => {
-    if (!isAuthenticated) {
-      toast.error("Please sign in to add courses to your wishlist");
-      navigate("/signin", {
-        state: { from: { pathname: `/courses/${courseSlug}` } },
-      });
-      return;
-    }
-
-    if (course) {
-      await toggleWishlist(course.id);
-      const isWishlistedNow = isWishlisted(course.id);
-      toast.success(
-        isWishlistedNow ? "Added to wishlist" : "Removed from wishlist"
-      );
     }
   };
 
@@ -235,7 +266,6 @@ const CourseDetail: React.FC = () => {
     );
   }
 
-  const wishlisted = isWishlisted(course.id);
   const thumbnailUrl = getCourseThumbnailUrl(course.thumbnail);
   const totalLessons =
     course.course_sections?.reduce(
@@ -323,6 +353,14 @@ const CourseDetail: React.FC = () => {
                       </span>
                     </div>
                   )}
+                  {isCompleted && (
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
+                        <CheckCircleIcon className="h-4 w-4 mr-1.5" />
+                        Completed
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <BookOpenIcon className="h-5 w-5 text-slate-400" />
                     <span className="text-slate-300">
@@ -342,6 +380,9 @@ const CourseDetail: React.FC = () => {
                       if (!isAuthenticated) return "Sign In to Start Learning";
                       
                       // Check if user is mentor who owns this course
+                      // Free courses don't require subscription
+                      if (course?.is_free) return "Start Learning Now";
+                      
                       const userRoles = Array.isArray(user?.roles) ? user?.roles : [];
                       const roleNames = userRoles.map((r: any) => typeof r === 'string' ? r : r?.name || '');
                       const isMentor = roleNames.includes('mentor');
@@ -350,20 +391,9 @@ const CourseDetail: React.FC = () => {
                       );
                       
                       if (isMentorOwnedCourse) return "Start Learning Now";
-                      if (user?.has_active_subscription) return "Start Learning Now";
+                      if (hasActiveSubscription) return "Start Learning Now";
                       return "Subscribe to Learn";
                     })()}
-                  </button>
-                  <button
-                    onClick={handleToggleWishlist}
-                    className="px-6 py-3 border border-slate-700 text-white font-semibold rounded-full hover:border-blue-500 transition-colors flex items-center gap-2"
-                  >
-                    <HeartIcon
-                      className={`h-5 w-5 ${
-                        wishlisted ? "text-red-500 fill-red-500" : ""
-                      }`}
-                    />
-                    {wishlisted ? "Saved" : "Add to Wishlist"}
                   </button>
                 </div>
               </div>

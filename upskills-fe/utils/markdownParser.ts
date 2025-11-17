@@ -8,23 +8,36 @@ const escapeHtml = (text: string): string => {
         .replace(/'/g, "&#039;");
 }
 
-// Helper function to process inline markdown elements like bold, italic, and code.
+// Helper function to process inline markdown elements like bold, italic, code, links, and images.
 const processInline = (text: string): string => {
-    return text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code class="inline-code">$1</code>');
+    // Process images first (before links, as images contain links)
+    text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+    
+    // Process links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // Process bold (**text** or __text__)
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // Process italic (*text* or _text_)
+    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    text = text.replace(/_(.*?)_/g, '<em>$1</em>');
+    
+    // Process inline code (but not if it's inside a code block)
+    text = text.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    
+    return text;
 };
 
-// A simple parser to convert markdown-like text to HTML.
+// A comprehensive parser to convert markdown-like text to HTML.
 export const parseContent = (markdown: string): string => {
     if (!markdown) return '';
     
-    // Escape the entire input first to prevent XSS, but we will handle it in processInline
-    // and for code blocks separately to avoid double-escaping.
     const lines = markdown.split('\n');
     let html = '';
     let inList = false;
+    let inOrderedList = false;
     let inCodeBlock = false;
     let codeLang = '';
     let codeContent = '';
@@ -37,13 +50,25 @@ export const parseContent = (markdown: string): string => {
         }
     }
 
-    for (const line of lines) {
+    const closeList = () => {
+        if (inList) {
+            html += '</ul>\n';
+            inList = false;
+        }
+        if (inOrderedList) {
+            html += '</ol>\n';
+            inOrderedList = false;
+        }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmedLine = line.trim();
+
+        // Handle code blocks
         if (line.startsWith('```')) {
             closeParagraph();
-            if (inList) {
-                html += '</ul>\n';
-                inList = false;
-            }
+            closeList();
             if (inCodeBlock) {
                 // End of code block
                 const escapedCode = escapeHtml(codeContent);
@@ -63,41 +88,112 @@ export const parseContent = (markdown: string): string => {
             continue;
         }
 
-        const trimmedLine = line.trim();
-
-        if (trimmedLine.startsWith('- ')) {
+        // Handle headings (# ## ### #### ##### ######)
+        if (trimmedLine.startsWith('###### ')) {
             closeParagraph();
+            closeList();
+            html += `<h6>${processInline(escapeHtml(trimmedLine.substring(7)))}</h6>\n`;
+            continue;
+        } else if (trimmedLine.startsWith('##### ')) {
+            closeParagraph();
+            closeList();
+            html += `<h5>${processInline(escapeHtml(trimmedLine.substring(6)))}</h5>\n`;
+            continue;
+        } else if (trimmedLine.startsWith('#### ')) {
+            closeParagraph();
+            closeList();
+            html += `<h4>${processInline(escapeHtml(trimmedLine.substring(5)))}</h4>\n`;
+            continue;
+        } else if (trimmedLine.startsWith('### ')) {
+            closeParagraph();
+            closeList();
+            html += `<h3>${processInline(escapeHtml(trimmedLine.substring(4)))}</h3>\n`;
+            continue;
+        } else if (trimmedLine.startsWith('## ')) {
+            closeParagraph();
+            closeList();
+            html += `<h2>${processInline(escapeHtml(trimmedLine.substring(3)))}</h2>\n`;
+            continue;
+        } else if (trimmedLine.startsWith('# ')) {
+            closeParagraph();
+            closeList();
+            html += `<h1>${processInline(escapeHtml(trimmedLine.substring(2)))}</h1>\n`;
+            continue;
+        }
+
+        // Handle horizontal rules
+        if (trimmedLine === '---' || trimmedLine === '***' || trimmedLine === '___') {
+            closeParagraph();
+            closeList();
+            html += '<hr />\n';
+            continue;
+        }
+
+        // Handle unordered lists (- or *)
+        if (trimmedLine.match(/^[-*]\s+/)) {
+            closeParagraph();
+            if (inOrderedList) {
+                html += '</ol>\n';
+                inOrderedList = false;
+            }
             if (!inList) {
                 html += '<ul>\n';
                 inList = true;
             }
-            html += `  <li>${processInline(escapeHtml(trimmedLine.substring(2)))}</li>\n`;
-        } else {
+            const listContent = trimmedLine.replace(/^[-*]\s+/, '');
+            html += `  <li>${processInline(escapeHtml(listContent))}</li>\n`;
+            continue;
+        }
+
+        // Handle ordered lists (1. 2. etc.)
+        if (trimmedLine.match(/^\d+\.\s+/)) {
+            closeParagraph();
             if (inList) {
                 html += '</ul>\n';
                 inList = false;
             }
-
-            if (trimmedLine.startsWith('### ')) {
-                closeParagraph();
-                html += `<h3>${processInline(escapeHtml(trimmedLine.substring(4)))}</h3>\n`;
-            } else if (trimmedLine !== '') {
-                if(!inParagraph) {
-                    html += '<p>';
-                    inParagraph = true;
-                    html += processInline(escapeHtml(line));
-                } else {
-                    html += '<br />' + processInline(escapeHtml(line));
-                }
-            } else {
-                closeParagraph();
+            if (!inOrderedList) {
+                html += '<ol>\n';
+                inOrderedList = true;
             }
+            const listContent = trimmedLine.replace(/^\d+\.\s+/, '');
+            html += `  <li>${processInline(escapeHtml(listContent))}</li>\n`;
+            continue;
+        }
+
+        // Handle blockquotes
+        if (trimmedLine.startsWith('> ')) {
+            closeParagraph();
+            closeList();
+            const quoteContent = trimmedLine.substring(2);
+            html += `<blockquote><p>${processInline(escapeHtml(quoteContent))}</p></blockquote>\n`;
+            continue;
+        }
+
+        // Handle empty lines
+        if (trimmedLine === '') {
+            closeParagraph();
+            closeList();
+            continue;
+        }
+
+        // Handle regular paragraphs
+        closeList();
+        if (!inParagraph) {
+            html += '<p>';
+            inParagraph = true;
+            html += processInline(escapeHtml(line));
+        } else {
+            html += ' ' + processInline(escapeHtml(line));
         }
     }
 
-    if (inList) html += '</ul>\n';
+    // Close any open tags
+    closeList();
     closeParagraph();
-    if (inCodeBlock) { // Failsafe for unclosed code blocks
+    
+    if (inCodeBlock) {
+        // Failsafe for unclosed code blocks
         const escapedCode = escapeHtml(codeContent);
         html += `<pre><code class="language-${codeLang}">${escapedCode.trim()}</code></pre>\n`;
     }

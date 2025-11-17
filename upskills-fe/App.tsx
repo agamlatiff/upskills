@@ -34,7 +34,6 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
 const Profile = lazy(() => import('./pages/Profile'));
 const CourseSearch = lazy(() => import('./pages/CourseSearch'));
-const Wishlist = lazy(() => import('./pages/Wishlist'));
 const CourseComplete = lazy(() => import('./pages/CourseComplete'));
 const MentorCourses = lazy(() => import('./pages/MentorCourses'));
 const MentorCourseContent = lazy(() => import('./pages/MentorCourseContent'));
@@ -95,7 +94,6 @@ const App: React.FC = () => {
             <Route path="/checkout/:pricingId" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
             <Route path="/checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/wishlist" element={<ProtectedRoute><Wishlist /></ProtectedRoute>} />
             <Route path="/mentor/courses" element={<ProtectedRoute><MentorCourses /></ProtectedRoute>} />
             <Route path="/mentor/courses/:courseId/content" element={<ProtectedRoute><MentorCourseContent /></ProtectedRoute>} />
             <Route path="/roadmaps/:roadmapId" element={<Roadmap />} />

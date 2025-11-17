@@ -6,7 +6,7 @@ import { getProfilePhotoUrl } from '../utils/imageUrl';
 
 export const TestimonialCard: React.FC<{ testimonial: Testimonial }> = ({ testimonial }) => {
     const user = testimonial.user;
-    const userName = user?.name || 'Anonymous';
+    const userName = user?.name || 'User';
     const userPhoto = user?.photo ? getProfilePhotoUrl(user.photo) : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userName) + '&background=1e293b&color=fff';
     const userTitle = user?.occupation || '';
     const company = ''; // Not in API, could be added later

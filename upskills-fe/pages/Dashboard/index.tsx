@@ -37,7 +37,9 @@ const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
     shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
     category: apiCourse.category?.name || 'Uncategorized',
     difficulty: difficulty,
-    duration: `${apiCourse.content_count || 0} lessons`,
+    duration: apiCourse.content_count && apiCourse.content_count > 0 
+      ? `${apiCourse.content_count} lessons` 
+      : 'No lessons yet',
     rating: 4.8, // Default rating
     students: 0, // Not provided by API
     price: 0, // Not provided by API

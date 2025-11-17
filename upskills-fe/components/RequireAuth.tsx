@@ -9,7 +9,7 @@ interface RequireAuthProps {
 }
 
 /**
- * Middleware component that requires authentication for actions like wishlist or course purchase
+ * Middleware component that requires authentication for actions like course purchase
  * Shows a toast message and redirects to signin if user is not authenticated
  */
 const RequireAuth: React.FC<RequireAuthProps> = ({ children, message }) => {
@@ -31,6 +31,7 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children, message }) => {
 };
 
 export default RequireAuth;
+
 
 
 

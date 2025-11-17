@@ -177,14 +177,6 @@ export interface Testimonial {
   updated_at: string;
 }
 
-// Wishlist Types
-export interface WishlistItem {
-  id: number;
-  course: Course;
-  created_at: string;
-  updated_at: string;
-}
-
 // Error Types
 export interface ValidationError {
   message: string;

@@ -72,5 +72,29 @@ class CourseCompletionController extends Controller
 
         return response()->json($completions);
     }
+
+    /**
+     * Delete a course completion for the authenticated user
+     */
+    public function destroy(Course $course)
+    {
+        $user = Auth::user();
+
+        $completion = CourseCompletion::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+
+        if (!$completion) {
+            return response()->json([
+                'message' => 'Course completion not found',
+            ], 404);
+        }
+
+        $completion->delete();
+
+        return response()->json([
+            'message' => 'Course completion removed successfully',
+        ], 200);
+    }
 }
 

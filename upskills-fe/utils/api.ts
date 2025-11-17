@@ -82,9 +82,9 @@ apiClient.interceptors.response.use(
         "/testimonials",
         "/courses",
       ];
-      
+
       // Check if current path is a public route (including dynamic routes like /courses/:slug)
-      const isPublicRoute = publicRoutes.some(route => {
+      const isPublicRoute = publicRoutes.some((route) => {
         if (route === "/") {
           return currentPath === "/";
         }
@@ -112,9 +112,13 @@ apiClient.interceptors.response.use(
 
     // Handle 500 Server errors
     if (error.response?.status === 500) {
-      // Log technical error to console for debugging
-      console.error("Server error:", error.response.data);
-      toast.error("Something went wrong on our end. Please try again in a moment.");
+      // Log technical error to console for debugging (development only)
+      if (process.env.NODE_ENV === "development") {
+        console.error("Server error:", error.response.data);
+      }
+      toast.error(
+        "Something went wrong on our end. Please try again in a moment."
+      );
     }
 
     // Handle 404 Not Found
@@ -130,7 +134,7 @@ apiClient.interceptors.response.use(
     // Handle database/SQL errors - show user-friendly message
     const errorData = error.response?.data as any;
     const errorMessage = errorData?.message || "";
-    
+
     // Check for SQL/database errors and replace with friendly message
     if (
       errorMessage.includes("SQLSTATE") ||
@@ -138,8 +142,12 @@ apiClient.interceptors.response.use(
       errorMessage.includes("doesn't exist") ||
       errorMessage.includes("SQL:")
     ) {
-      console.error("Database error:", errorMessage);
-      toast.error("We're experiencing some technical difficulties. Please try again later.");
+      if (process.env.NODE_ENV === "development") {
+        console.error("Database error:", errorMessage);
+      }
+      toast.error(
+        "We're experiencing some technical difficulties. Please try again later."
+      );
       return Promise.reject(error);
     }
 
@@ -154,12 +162,16 @@ apiClient.interceptors.response.use(
     ) {
       // Extract user-friendly message or provide default
       let friendlyMessage = "An unexpected error occurred. Please try again.";
-      
-      if (errorMessage && !errorMessage.includes("SQLSTATE") && !errorMessage.includes("SQL:")) {
+
+      if (
+        errorMessage &&
+        !errorMessage.includes("SQLSTATE") &&
+        !errorMessage.includes("SQL:")
+      ) {
         // Use the message if it's not a technical SQL error
         friendlyMessage = errorMessage;
       }
-      
+
       toast.error(friendlyMessage);
     }
 

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import useToastStore from '../../store/toastStore';
 import apiClient from '../../utils/api';
+import { parseContent } from '../../utils/markdownParser';
 import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon, XIcon, ChevronDownIcon, ChevronUpIcon } from '../../components/Icons';
 
 interface CourseSection {
@@ -29,6 +30,10 @@ const MentorCourseContent: React.FC = () => {
   const [sections, setSections] = useState<CourseSection[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<number, boolean>>({});
+  
+  // Refs for scrolling to forms
+  const sectionFormRef = useRef<HTMLDivElement>(null);
+  const contentFormRef = useRef<HTMLDivElement>(null);
   
   // Section form state
   const [showSectionForm, setShowSectionForm] = useState(false);
@@ -70,6 +75,40 @@ const MentorCourseContent: React.FC = () => {
     }
   }, [courseId]);
 
+  // Scroll to section form when it opens
+  useEffect(() => {
+    if (showSectionForm && sectionFormRef.current) {
+      setTimeout(() => {
+        sectionFormRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+        // Focus on the first input field
+        const firstInput = sectionFormRef.current.querySelector('input[type="text"]') as HTMLInputElement;
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    }
+  }, [showSectionForm]);
+
+  // Scroll to content form when it opens
+  useEffect(() => {
+    if (showContentForm && contentFormRef.current) {
+      setTimeout(() => {
+        contentFormRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+        // Focus on the first input field
+        const firstInput = contentFormRef.current.querySelector('input[type="text"]') as HTMLInputElement;
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }, 100);
+    }
+  }, [showContentForm]);
+
   const fetchCourseAndSections = async () => {
     setLoading(true);
     try {
@@ -91,12 +130,8 @@ const MentorCourseContent: React.FC = () => {
       const sectionsData = Array.isArray(sectionsResponse.data) ? sectionsResponse.data : [];
       setSections(sectionsData);
 
-      // Expand all sections by default
-      const expanded: Record<number, boolean> = {};
-      sectionsData.forEach((section: CourseSection) => {
-        expanded[section.id] = true;
-      });
-      setExpandedSections(expanded);
+      // All sections are collapsed by default (user needs to click to expand)
+      setExpandedSections({});
 
       // Update form position to next available if form is open and not editing
       if (showSectionForm && !editingSection) {
@@ -279,7 +314,7 @@ const MentorCourseContent: React.FC = () => {
 
         {/* Section Form */}
         {showSectionForm && (
-          <div className="mb-8 bg-brand-dark border border-slate-800 rounded-2xl shadow-lg p-6">
+          <div ref={sectionFormRef} className="mb-8 bg-brand-dark border border-slate-800 rounded-2xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">
                 {editingSection ? 'Edit Section' : 'Create New Section'}
@@ -370,7 +405,7 @@ const MentorCourseContent: React.FC = () => {
 
         {/* Content Form */}
         {showContentForm && selectedSectionId && (
-          <div className="mb-8 bg-brand-dark border border-slate-800 rounded-2xl shadow-lg p-6">
+          <div ref={contentFormRef} className="mb-8 bg-brand-dark border border-slate-800 rounded-2xl shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">
                 {editingContent ? 'Edit Content' : 'Add New Content'}
@@ -405,12 +440,18 @@ const MentorCourseContent: React.FC = () => {
                 <textarea
                   value={contentFormData.content}
                   onChange={(e) => setContentFormData({ ...contentFormData, content: e.target.value })}
-                  rows={10}
-                  className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                  placeholder="Enter your lesson content here. You can use HTML or markdown."
+                  rows={15}
+                  className="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm leading-relaxed"
+                  placeholder="Enter your lesson content here. You can use markdown formatting."
                   required
                 />
-                <p className="mt-2 text-xs text-slate-400">Supports HTML and markdown formatting</p>
+                <div className="mt-3 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                  <p className="text-xs font-semibold text-blue-400 mb-2">✓ Supports Markdown formatting</p>
+                  <div className="text-xs text-slate-400 space-y-1">
+                    <p><strong className="text-slate-300">Markdown:</strong> Use # for headings, - or * for lists, **bold**, *italic*, `code`, etc.</p>
+                    <p className="mt-2 text-slate-500">Examples: <code className="text-blue-400"># Heading</code> for heading, <code className="text-blue-400">**bold**</code> for bold text, <code className="text-blue-400">- item</code> for list</p>
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4">
@@ -532,8 +573,8 @@ const MentorCourseContent: React.FC = () => {
                                 <div className="flex-1">
                                   <h5 className="font-semibold text-white mb-2">{content.name}</h5>
                                   <div 
-                                    className="text-slate-300 text-sm prose prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: content.content.substring(0, 200) + (content.content.length > 200 ? '...' : '') }}
+                                    className="text-slate-300 text-sm prose prose-invert max-w-none prose-p:text-slate-300 prose-headings:text-white prose-strong:text-white prose-code:text-blue-300 prose-code:bg-slate-900 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-pre:rounded prose-pre:p-2 prose-pre:text-xs"
+                                    dangerouslySetInnerHTML={{ __html: parseContent(content.content.substring(0, 200) + (content.content.length > 200 ? '...' : '')) }}
                                   />
                                 </div>
                                 <div className="flex gap-2">

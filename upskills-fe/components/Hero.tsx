@@ -28,7 +28,7 @@ const Hero: React.FC = () => {
               <Link to="/signup" className="inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-semibold rounded-full shadow-md hover:bg-blue-700 transition-transform hover:scale-105 duration-300">
                 Get Started
               </Link>
-              <Link to="/#learning-paths" className="inline-flex items-center justify-center px-8 py-3 bg-slate-800 text-slate-200 font-semibold rounded-full shadow-md ring-1 ring-slate-700 hover:bg-slate-700 transition-transform hover:scale-105 duration-300">
+              <Link to="/roadmaps/frontend-developer" className="inline-flex items-center justify-center px-8 py-3 bg-slate-800 text-slate-200 font-semibold rounded-full shadow-md ring-1 ring-slate-700 hover:bg-slate-700 transition-transform hover:scale-105 duration-300">
                 <PlayIcon className="h-6 w-6 mr-2 text-blue-500" />
                 How It Works
               </Link>

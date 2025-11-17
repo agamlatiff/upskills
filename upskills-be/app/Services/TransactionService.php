@@ -31,8 +31,8 @@ class TransactionService
     $grand_total_amount = $sub_total_amount + $total_tax_amount;
 
 
-    $started_at = now();
-    $ended_at = $started_at->copy()->addMonth($pricing->duration);
+    $started_at = now()->startOfDay();
+    $ended_at = $started_at->copy()->addMonths($pricing->duration)->endOfDay();
 
     session()->put("pricing_id", $pricing->id);
 

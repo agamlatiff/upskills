@@ -24,6 +24,10 @@ class Pricing extends Model
 
     public function isSubscribedByUser($userId)
     {
-        return $this->transactions()->where("user_id", $userId)->where("is_paid", true)->where("ended_at", ">=", now())->exists();
+        return $this->transactions()
+            ->where("user_id", $userId)
+            ->where("is_paid", true)
+            ->where("ended_at", ">=", now())
+            ->exists();
     }
 }

@@ -4,10 +4,21 @@ import { StarIcon, ChevronLeftIcon, ChevronRightIcon } from './Icons';
 import { useCourses } from '../hooks/useCourses';
 import { CourseCard } from './CourseCard';
 import { Course as ApiCourse } from '../types/api';
-import { getCourseThumbnailUrl } from '../utils/imageUrl';
+import { getCourseThumbnailUrl, getProfilePhotoUrl } from '../utils/imageUrl';
 
 // Helper function to convert API Course to frontend Course format
 const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
+  // Map API difficulty to frontend format
+  const difficultyMap: Record<string, string> = {
+    'beginner': 'Beginner',
+    'intermediate': 'Intermediate',
+    'advanced': 'Advanced',
+  };
+  
+  const difficulty = apiCourse.difficulty 
+    ? difficultyMap[apiCourse.difficulty] || 'All Levels'
+    : 'All Levels';
+
   return {
     id: apiCourse.id,
     slug: apiCourse.slug,
@@ -15,17 +26,21 @@ const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
     image: getCourseThumbnailUrl(apiCourse.thumbnail),
     shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
     category: apiCourse.category?.name || 'Uncategorized',
-    difficulty: 'All Levels', // Default since API doesn't provide this
-    duration: `${apiCourse.content_count || 0} lessons`,
+    difficulty: difficulty,
+    duration: apiCourse.content_count && apiCourse.content_count > 0 
+      ? `${apiCourse.content_count} lessons` 
+      : 'No lessons yet',
     rating: 4.8, // Default rating
     students: 0, // Not provided by API
     price: 0, // Not provided by API
-    isFree: false, // Not provided by API
+    isFree: apiCourse.is_free || false,
     popular: apiCourse.is_populer || false,
     longDescription: apiCourse.about || '',
     instructor: {
       name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
-      avatar: '/placeholder-avatar.jpg',
+      avatar: apiCourse.course_mentors?.[0]?.mentor?.photo 
+        ? getProfilePhotoUrl(apiCourse.course_mentors[0].mentor.photo)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`,
     },
   };
 };

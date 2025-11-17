@@ -3,7 +3,7 @@ import apiClient from '../utils/api';
 import { Testimonial } from '../types/api';
 
 interface UseTestimonialsParams {
-  verified?: boolean;
+  verified?: boolean | undefined;
   courseId?: number;
   limit?: number;
 }
@@ -18,9 +18,11 @@ export const useTestimonials = (params?: UseTestimonialsParams) => {
       setLoading(true);
       setError(null);
       const queryParams = new URLSearchParams();
-      if (params?.verified !== undefined) {
-        queryParams.append('verified', params.verified.toString());
+      // Only add verified parameter if it's explicitly true (not undefined)
+      if (params?.verified === true) {
+        queryParams.append('verified', 'true');
       }
+      // If verified is false or undefined, don't add the parameter (backend will return all)
       if (params?.courseId) {
         queryParams.append('course_id', params.courseId.toString());
       }
@@ -64,8 +66,9 @@ export const useTestimonials = (params?: UseTestimonialsParams) => {
     outcome?: string;
   }) => {
     try {
-      const response = await apiClient.put<Testimonial>(`/testimonials/${id}`, testimonialData);
-      const updatedTestimonial = response.data;
+      const response = await apiClient.put<{ testimonial?: Testimonial; data?: Testimonial } | Testimonial>(`/testimonials/${id}`, testimonialData);
+      // Handle both wrapped and unwrapped responses
+      const updatedTestimonial = (response.data as any)?.testimonial || (response.data as any)?.data || response.data;
       setTestimonials((prev) =>
         prev.map((t) => (t.id === id ? updatedTestimonial : t))
       );

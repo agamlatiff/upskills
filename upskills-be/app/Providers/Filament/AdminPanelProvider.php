@@ -28,7 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('UpSkills Admin')
-            ->favicon(asset('assets/images/logos/logo-64.png'))
+            ->favicon(asset('assets/images/logos/favicon-star.svg'))
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([
                 'Managements',

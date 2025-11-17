@@ -1,33 +1,119 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import ProtectedRoute from '../../components/ProtectedRoute';
-import apiClient from '../../utils/api';
-import { Pricing } from '../../types/api';
-import { TrophyIcon } from '../../components/Icons';
+import React, { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import apiClient from "../../utils/api";
+import { Pricing } from "../../types/api";
+import { TrophyIcon } from "../../components/Icons";
+import useAuthStore from "../../store/authStore";
 
 const CheckoutSuccess: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [pricing, setPricing] = useState<Pricing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
-    const fetchSuccessData = async () => {
+    const fetchSuccessData = async (retryCount = 0) => {
       try {
-        const response = await apiClient.get<{ data: { pricing: Pricing } } | { pricing: Pricing }>(
-          '/checkout/success'
-        );
+        // Check if this is a redirect from Midtrans
+        const orderId = searchParams.get("order_id");
+        const statusCode = searchParams.get("status_code");
+        const transactionStatus = searchParams.get("transaction_status");
+
+        // Build endpoint dengan order_id jika ada
+        let endpoint = "/checkout/success";
+        if (orderId) {
+          endpoint = `/checkout/success?order_id=${encodeURIComponent(orderId)}`;
+          if (statusCode) {
+            endpoint += `&status_code=${encodeURIComponent(statusCode)}`;
+          }
+          if (transactionStatus) {
+            endpoint += `&transaction_status=${encodeURIComponent(transactionStatus)}`;
+          }
+        }
+
+        const response = await apiClient.get<{
+          data?: { pricing: Pricing };
+          pricing?: Pricing;
+          message?: string;
+          error?: string;
+          retry?: boolean;
+        }>(endpoint);
+
+        // Handle error response with retry flag
+        if (response.data.error) {
+          // If backend says to retry and we haven't retried too many times
+          if (response.data.retry && retryCount < 5) {
+            setError(response.data.error + " Retrying...");
+            setTimeout(() => {
+              fetchSuccessData(retryCount + 1);
+            }, 2000);
+            return;
+          }
+
+          setError(response.data.error);
+          setLoading(false);
+          return;
+        }
+
         // Handle both wrapped and unwrapped responses
         const data = (response.data as any)?.data || response.data;
-        setPricing(data.pricing || data);
+        const pricingData = data.pricing || data;
+
+        if (pricingData) {
+          setPricing(pricingData);
+          setError(null);
+          // Force refresh user data to update subscription status and profile
+          // Don't await to avoid blocking UI, let it run in background
+          checkAuth(true).catch((err) => {
+            // Silently handle error, user data will be refreshed on next navigation
+            if (process.env.NODE_ENV === "development") {
+              console.error("Failed to refresh user data:", err);
+            }
+          });
+        } else {
+          setError("Pricing information not found");
+        }
       } catch (err: any) {
-        setError(err.response?.data?.error || 'Failed to load checkout success data');
+        const errorMessage =
+          err.response?.data?.error ||
+          err.message ||
+          "Failed to load checkout success data";
+
+        // If it's a 404 and we have an order_id, try retrying a few times
+        if (
+          err.response?.status === 404 &&
+          searchParams.get("order_id") &&
+          retryCount < 3
+        ) {
+          setError("Transaction is being processed. Please wait...");
+          setTimeout(() => {
+            fetchSuccessData(retryCount + 1);
+          }, 2000);
+          return;
+        }
+
+        setError(errorMessage);
+
+        // Log error untuk debugging (development only)
+        if (process.env.NODE_ENV === "development") {
+          console.error("Checkout success error:", {
+            error: errorMessage,
+            orderId: searchParams.get("order_id"),
+            statusCode: searchParams.get("status_code"),
+            transactionStatus: searchParams.get("transaction_status"),
+            response: err.response?.data,
+            retryCount,
+          });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchSuccessData();
-  }, []);
+  }, [searchParams]);
 
   if (loading) {
     return (
@@ -69,8 +155,12 @@ const CheckoutSuccess: React.FC = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-white mb-4">Checkout Information Not Found</h1>
-              <p className="text-red-400 mb-6">{error || 'Unable to load checkout success information'}</p>
+              <h1 className="text-2xl font-bold text-white mb-4">
+                Checkout Information Not Found
+              </h1>
+              <p className="text-red-400 mb-6">
+                {error || "Unable to load checkout success information"}
+              </p>
               <Link
                 to="/dashboard/subscriptions"
                 className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -99,9 +189,13 @@ const CheckoutSuccess: React.FC = () => {
 
             {/* Title */}
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white">Payment Successful</h1>
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white">
+                Payment Successful
+              </h1>
               <p className="text-lg text-slate-400 leading-relaxed">
-                You now have access to the latest course materials as preparation for working in the current digital industry era. Yay!
+                You now have access to the latest course materials as
+                preparation for working in the current digital industry era.
+                Yay!
               </p>
             </div>
 
@@ -116,16 +210,21 @@ const CheckoutSuccess: React.FC = () => {
               </div>
               <div className="flex-1 text-left">
                 <h2 className="text-xl font-bold text-white mb-2">
-                  Subscription Active:<br />
+                  Subscription Active:
+                  <br />
                   {pricing.name}
                 </h2>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-slate-400 text-sm">
-                    <span className="w-5 h-5 flex items-center justify-center">📅</span>
+                    <span className="w-5 h-5 flex items-center justify-center">
+                      📅
+                    </span>
                     <span>{pricing.duration} Months Access</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-400 text-sm">
-                    <span className="w-5 h-5 flex items-center justify-center">💼</span>
+                    <span className="w-5 h-5 flex items-center justify-center">
+                      💼
+                    </span>
                     <span>Job-Ready Skills</span>
                   </div>
                 </div>
@@ -164,4 +263,3 @@ const CheckoutSuccessWithProtection: React.FC = () => (
 );
 
 export default CheckoutSuccessWithProtection;
-

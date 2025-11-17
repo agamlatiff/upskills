@@ -8,6 +8,14 @@ export const useSubscriptions = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchSubscriptions = async () => {
+    // Check if user is authenticated before fetching
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      setSubscriptions([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -16,7 +24,12 @@ export const useSubscriptions = () => {
       const data = Array.isArray(response.data) ? response.data : (response.data as any)?.data || [];
       setSubscriptions(data);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to fetch subscriptions');
+      // If 401 or 403, user is not authenticated or doesn't have access
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setSubscriptions([]);
+      } else {
+        setError(err.response?.data?.message || 'Failed to fetch subscriptions');
+      }
     } finally {
       setLoading(false);
     }

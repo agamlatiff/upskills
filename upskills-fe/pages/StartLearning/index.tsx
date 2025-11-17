@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCourseLearning } from '../../hooks/useCourseLearning';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { parseContent } from '../../utils/markdownParser';
 import { 
   ArrowLeftIcon, 
   ChevronDownIcon, 
@@ -23,22 +24,64 @@ const StartLearning: React.FC = () => {
   );
   const [openSections, setOpenSections] = useState<Record<number, boolean>>({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [parsedContent, setParsedContent] = useState<string>('');
+  const [completedContents, setCompletedContents] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     // Open the current section by default
     if (learningData?.current_section) {
       setOpenSections(prev => ({ ...prev, [learningData.current_section!.id]: true }));
     }
-  }, [learningData]);
+    
+    // Load completed contents from localStorage
+    if (courseSlug) {
+      const saved = localStorage.getItem(`completed_contents_${courseSlug}`);
+      if (saved) {
+        try {
+          const completed = JSON.parse(saved);
+          setCompletedContents(new Set(completed));
+        } catch (e) {
+          // Ignore parse errors
+        }
+      }
+    }
+  }, [learningData, courseSlug]);
+
+  // Mark current content as completed when user views it
+  useEffect(() => {
+    if (learningData?.current_content?.id && courseSlug) {
+      setCompletedContents(prev => {
+        const newSet = new Set(prev);
+        newSet.add(learningData.current_content!.id);
+        
+        // Save to localStorage
+        const saved = Array.from(newSet);
+        localStorage.setItem(`completed_contents_${courseSlug}`, JSON.stringify(saved));
+        
+        return newSet;
+      });
+    }
+  }, [learningData?.current_content?.id, courseSlug]);
+
+  useEffect(() => {
+    // Parse markdown content when it changes
+    if (learningData?.current_content?.content) {
+      const parsed = parseContent(learningData.current_content.content);
+      setParsedContent(parsed);
+    }
+  }, [learningData?.current_content?.content]);
 
   useEffect(() => {
     // Highlight code blocks if highlight.js is available
-    if (typeof window !== 'undefined' && (window as any).hljs) {
-      document.querySelectorAll('pre code').forEach((block) => {
-        (window as any).hljs.highlightElement(block);
-      });
+    if (typeof window !== 'undefined' && (window as any).hljs && parsedContent) {
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        document.querySelectorAll('pre code').forEach((block) => {
+          (window as any).hljs.highlightElement(block);
+        });
+      }, 0);
     }
-  }, [learningData?.current_content?.content]);
+  }, [parsedContent]);
 
   if (loading) {
     return (
@@ -173,17 +216,21 @@ const StartLearning: React.FC = () => {
                       <ul className="space-y-2 pl-2">
                         {section.section_contents?.map((content) => {
                           const isActive = isActiveContent(section.id, content.id);
+                          const isCompleted = completedContents.has(content.id);
                           return (
                             <li key={content.id}>
                               <Link
                                 to={`/courses/${courseSlug}/learn/${section.id}/${content.id}`}
-                                className={`block px-3 py-2 rounded-full border transition-all text-sm ${
+                                className={`flex items-center gap-2 px-3 py-2 rounded-full border transition-all text-sm ${
                                   isActive
                                     ? 'bg-blue-600 border-blue-600 text-white'
                                     : 'border-slate-700 text-slate-300 hover:border-blue-500 hover:bg-slate-700'
                                 }`}
                               >
-                                {content.name}
+                                <span className="flex-1">{content.name}</span>
+                                {isCompleted && (
+                                  <CheckCircleIcon className="h-5 w-5 text-green-400 flex-shrink-0" />
+                                )}
                               </Link>
                             </li>
                           );
@@ -215,8 +262,25 @@ const StartLearning: React.FC = () => {
               <div className="prose prose-invert max-w-none">
                 <h1 className="text-4xl font-bold text-white mb-6">{current_content.name}</h1>
                 <div
-                  className="text-slate-300 leading-relaxed prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-a:text-blue-400 prose-code:text-slate-200 prose-pre:bg-slate-800 prose-pre:border prose-pre:border-slate-700"
-                  dangerouslySetInnerHTML={{ __html: current_content.content }}
+                  className="text-slate-300 leading-relaxed prose prose-invert max-w-none 
+                    prose-headings:text-white prose-headings:font-bold
+                    prose-h1:text-3xl prose-h1:mt-8 prose-h1:mb-4 prose-h1:text-white
+                    prose-h2:text-2xl prose-h2:mt-6 prose-h2:mb-3 prose-h2:text-blue-400
+                    prose-h3:text-xl prose-h3:mt-5 prose-h3:mb-3 prose-h3:text-blue-400
+                    prose-h4:text-lg prose-h4:mt-4 prose-h4:mb-2 prose-h4:text-blue-300
+                    prose-p:text-slate-300 prose-p:mb-4 prose-p:leading-7
+                    prose-a:text-blue-400 prose-a:no-underline hover:prose-a:text-blue-300 hover:prose-a:underline
+                    prose-strong:text-white prose-strong:font-semibold
+                    prose-em:text-slate-200 prose-em:italic
+                    prose-ul:list-disc prose-ul:ml-6 prose-ul:mb-4 prose-ul:space-y-2
+                    prose-ol:list-decimal prose-ol:ml-6 prose-ol:mb-4 prose-ol:space-y-2
+                    prose-li:text-slate-300 prose-li:mb-2 prose-li:leading-7
+                    prose-code:text-blue-300 prose-code:bg-slate-900 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-sm prose-code:font-mono
+                    prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-pre:rounded-lg prose-pre:p-4 prose-pre:overflow-x-auto prose-pre:mb-4
+                    prose-blockquote:border-l-4 prose-blockquote:border-blue-500 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-slate-400 prose-blockquote:my-4 prose-blockquote:bg-slate-800/50 prose-blockquote:py-2 prose-blockquote:rounded-r
+                    prose-hr:border-slate-700 prose-hr:my-8
+                    prose-img:rounded-lg prose-img:shadow-lg prose-img:my-4"
+                  dangerouslySetInnerHTML={{ __html: parsedContent || current_content.content }}
                 />
               </div>
             )}

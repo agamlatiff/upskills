@@ -1,13 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { usePricing } from "../../hooks/usePricing";
 import { useAuth } from "../../hooks/useAuth";
-import { CheckIcon, StarIcon } from "../../components/Icons";
+import { CheckIcon } from "../../components/Icons";
 
 const Pricing: React.FC = () => {
-  const [isYearly, setIsYearly] = useState(false);
   const { pricingPlans, loading, error } = usePricing();
   const { isAuthenticated } = useAuth();
+
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("id-ID", {
@@ -97,11 +97,10 @@ const Pricing: React.FC = () => {
               <div className="mt-12 mx-auto grid max-w-md grid-cols-1 gap-8 lg:max-w-5xl lg:grid-cols-3">
                 {pricingPlans.map((plan) => {
                   const isSubscribed = plan.is_subscribed;
-                  const cardClasses = `relative flex flex-col p-8 rounded-2xl border ${
-                    plan.is_populer
+                  const cardClasses = `relative flex flex-col p-8 rounded-2xl border ${plan.is_populer
                       ? "bg-brand-dark border-blue-500 shadow-2xl shadow-blue-500/20"
                       : "bg-slate-900 border-slate-800"
-                  } transform transition-transform duration-300 hover:-translate-y-2`;
+                    } transform transition-transform duration-300 hover:-translate-y-2`;
 
                   return (
                     <div key={plan.id} className={cardClasses}>

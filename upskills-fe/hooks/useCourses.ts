@@ -1,18 +1,32 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../utils/api';
 import { Course, CoursesByCategory } from '../types/api';
+import useCacheStore from '../store/cacheStore';
 
 export const useCourses = () => {
   const [courses, setCourses] = useState<CoursesByCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCourses = async () => {
+  const { getCourses: getCachedCourses, setCourses: cacheCourses } = useCacheStore();
+
+  const fetchCourses = async (forceRefresh = false) => {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = getCachedCourses();
+      if (cached) {
+        setCourses(cached);
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     try {
       const response = await apiClient.get<CoursesByCategory[]>('/courses');
       setCourses(response.data);
+      // Update cache
+      cacheCourses(response.data);
     } catch (err: any) {
       // Show user-friendly error message
       const errorMessage = err.response?.data?.message || '';
@@ -34,7 +48,7 @@ export const useCourses = () => {
     courses,
     loading,
     error,
-    refetch: fetchCourses,
+    refetch: () => fetchCourses(true),
   };
 };
 
@@ -43,7 +57,18 @@ export const useCourse = (slug: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCourse = async () => {
+  const { getCourseDetail, setCourseDetail } = useCacheStore();
+
+  const fetchCourse = async (forceRefresh = false) => {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh) {
+      const cached = getCourseDetail(slug);
+      if (cached) {
+        setCourse(cached);
+        return;
+      }
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -51,6 +76,8 @@ export const useCourse = (slug: string) => {
       // Handle both wrapped and unwrapped responses
       const data = (response.data as any)?.data || response.data;
       setCourse(data);
+      // Update cache
+      setCourseDetail(slug, data);
     } catch (err: any) {
       // Show user-friendly error message
       const errorMessage = err.response?.data?.message || '';
@@ -74,7 +101,7 @@ export const useCourse = (slug: string) => {
     course,
     loading,
     error,
-    refetch: fetchCourse,
+    refetch: () => fetchCourse(true),
   };
 };
 
@@ -98,8 +125,8 @@ export const useSearchCourses = () => {
       );
       // Handle both wrapped and unwrapped responses
       const data = response.data;
-      const coursesData = Array.isArray(data.courses) 
-        ? data.courses 
+      const coursesData = Array.isArray(data.courses)
+        ? data.courses
         : (data as any)?.data?.courses || [];
       setCourses(coursesData);
     } catch (err: any) {

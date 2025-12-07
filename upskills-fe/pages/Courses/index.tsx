@@ -4,43 +4,44 @@ import { useCourses } from '../../hooks/useCourses';
 import { CourseCard } from '../../components/CourseCard';
 import { Course as ApiCourse } from '../../types/api';
 import { getCourseThumbnailUrl, getProfilePhotoUrl } from '../../utils/imageUrl';
+import { useSEO } from '../../hooks/useSEO';
 
 // Helper function to convert API Course to frontend Course format
 const convertApiCourseToCourse = (apiCourse: ApiCourse): any => {
-  // Map API difficulty to frontend format
-  const difficultyMap: Record<string, string> = {
-    'beginner': 'Beginner',
-    'intermediate': 'Intermediate',
-    'advanced': 'Advanced',
-  };
-  
-  const difficulty = apiCourse.difficulty 
-    ? difficultyMap[apiCourse.difficulty] || 'All Levels'
-    : 'All Levels';
+    // Map API difficulty to frontend format
+    const difficultyMap: Record<string, string> = {
+        'beginner': 'Beginner',
+        'intermediate': 'Intermediate',
+        'advanced': 'Advanced',
+    };
 
-  return {
-    id: apiCourse.id,
-    slug: apiCourse.slug,
-    title: apiCourse.name,
-    image: getCourseThumbnailUrl(apiCourse.thumbnail),
-    shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
-    category: apiCourse.category?.name || 'Uncategorized',
-    difficulty: difficulty,
-    duration: apiCourse.content_count && apiCourse.content_count > 0 
-      ? `${apiCourse.content_count} lessons` 
-      : 'No lessons yet',
-    students: apiCourse.testimonial_count || 0,
-    price: 0, // Not provided by API
-    isFree: apiCourse.is_free || false,
-    popular: apiCourse.is_populer || false,
-    longDescription: apiCourse.about || '',
-    instructor: {
-      name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
-      avatar: apiCourse.course_mentors?.[0]?.mentor?.photo 
-        ? getProfilePhotoUrl(apiCourse.course_mentors[0].mentor.photo)
-        : `https://ui-avatars.com/api/?name=${encodeURIComponent(apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`,
-    },
-  };
+    const difficulty = apiCourse.difficulty
+        ? difficultyMap[apiCourse.difficulty] || 'All Levels'
+        : 'All Levels';
+
+    return {
+        id: apiCourse.id,
+        slug: apiCourse.slug,
+        title: apiCourse.name,
+        image: getCourseThumbnailUrl(apiCourse.thumbnail),
+        shortDescription: apiCourse.about ? apiCourse.about.substring(0, 150) + '...' : 'No description available',
+        category: apiCourse.category?.name || 'Uncategorized',
+        difficulty: difficulty,
+        duration: apiCourse.content_count && apiCourse.content_count > 0
+            ? `${apiCourse.content_count} lessons`
+            : 'No lessons yet',
+        students: apiCourse.testimonial_count || 0,
+        price: 0, // Not provided by API
+        isFree: apiCourse.is_free || false,
+        popular: apiCourse.is_populer || false,
+        longDescription: apiCourse.about || '',
+        instructor: {
+            name: apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor',
+            avatar: apiCourse.course_mentors?.[0]?.mentor?.photo
+                ? getProfilePhotoUrl(apiCourse.course_mentors[0].mentor.photo)
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(apiCourse.course_mentors?.[0]?.mentor?.name || 'Instructor')}&background=1e293b&color=fff&size=64`,
+        },
+    };
 };
 
 const Courses: React.FC = () => {
@@ -53,6 +54,15 @@ const Courses: React.FC = () => {
     const [freeFilter, setFreeFilter] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const COURSES_PER_PAGE = 9;
+
+    // SEO for Courses page
+    useSEO({
+        title: 'Explore Courses',
+        description: 'Temukan kursus programming terbaik - React, Node.js, Python, UI/UX Design, dan banyak lagi. Belajar dari mentor ahli dengan proyek real-world.',
+        keywords: 'kursus programming, belajar coding, react course, node.js course, python course, web development',
+        canonical: 'https://upskill.id/courses',
+    });
+
 
     // Get all unique categories from API
     const categoryOptions = React.useMemo(() => {
@@ -68,7 +78,7 @@ const Courses: React.FC = () => {
     const difficultyOptions = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
 
     const handleCategoryToggle = (category: string) => {
-        setCategoryFilters(prev => 
+        setCategoryFilters(prev =>
             prev.includes(category) ? prev.filter(c => c !== category) : [...prev, category]
         );
     };
@@ -83,7 +93,7 @@ const Courses: React.FC = () => {
     useEffect(() => {
         const allApiCourses = coursesByCategory.flatMap(group => group.courses || []);
         const convertedCourses = allApiCourses.map(convertApiCourseToCourse);
-        
+
         let courses = convertedCourses;
 
         if (searchTerm) {
@@ -92,7 +102,7 @@ const Courses: React.FC = () => {
                 course.longDescription.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
-        
+
         if (categoryFilters.length > 0) {
             courses = courses.filter(course => categoryFilters.includes(course.category));
         }
@@ -224,11 +234,10 @@ const Courses: React.FC = () => {
                                     <button
                                         key={cat}
                                         onClick={() => handleCategoryToggle(cat)}
-                                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                                            categoryFilters.includes(cat) 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                        }`}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${categoryFilters.includes(cat)
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                            }`}
                                     >
                                         {cat}
                                     </button>
@@ -242,11 +251,10 @@ const Courses: React.FC = () => {
                                     <button
                                         key={diff}
                                         onClick={() => handleDifficultyToggle(diff)}
-                                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                                            difficultyFilters.includes(diff) 
-                                                ? 'bg-blue-600 text-white' 
-                                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                        }`}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors ${difficultyFilters.includes(diff)
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                            }`}
                                     >
                                         {diff}
                                     </button>
@@ -254,7 +262,7 @@ const Courses: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="pt-6 border-t border-slate-700 flex flex-wrap items-center gap-x-8 gap-y-4">
                         <label htmlFor="popular" className="flex items-center cursor-pointer group">
                             <StarIcon className={`h-5 w-5 mr-2 transition-colors ${popularFilter ? 'text-yellow-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
@@ -273,7 +281,7 @@ const Courses: React.FC = () => {
                                 <div className="absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-5"></div>
                             </div>
                         </label>
-                         <label htmlFor="free" className="flex items-center cursor-pointer group">
+                        <label htmlFor="free" className="flex items-center cursor-pointer group">
                             <SparklesIcon className={`h-5 w-5 mr-2 transition-colors ${freeFilter ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`} />
                             <span className={`font-medium text-sm transition-colors mr-3 ${freeFilter ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                                 Free Only
@@ -292,7 +300,7 @@ const Courses: React.FC = () => {
                         </label>
                     </div>
                 </div>
-                
+
                 {/* Courses Grid */}
                 {currentCourses.length > 0 ? (
                     <>
@@ -301,7 +309,7 @@ const Courses: React.FC = () => {
                                 <CourseCard key={course.id} course={course} />
                             ))}
                         </div>
-                        
+
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
                             <nav aria-label="Course pagination" className="mt-16 flex justify-center items-center space-x-2">
@@ -314,17 +322,16 @@ const Courses: React.FC = () => {
                                     <ChevronLeftIcon className="h-5 w-5" />
                                     <span>Previous</span>
                                 </button>
-                                
+
                                 <div className="hidden sm:flex items-center space-x-2">
                                     {Array.from({ length: totalPages }, (_, i) => (
                                         <button
                                             key={i + 1}
                                             onClick={() => paginate(i + 1)}
-                                            className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                                                currentPage === i + 1
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                                            }`}
+                                            className={`px-4 py-2 text-sm font-medium rounded-lg ${currentPage === i + 1
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                                                }`}
                                             aria-label={`Go to page ${i + 1}`}
                                             aria-current={currentPage === i + 1 ? 'page' : undefined}
                                         >
@@ -335,7 +342,7 @@ const Courses: React.FC = () => {
                                 <span className="text-slate-400 text-sm sm:hidden">
                                     Page {currentPage} of {totalPages}
                                 </span>
-                                
+
                                 <button
                                     onClick={() => paginate(currentPage + 1)}
                                     disabled={currentPage === totalPages}

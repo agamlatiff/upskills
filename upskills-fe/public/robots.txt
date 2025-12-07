@@ -1,0 +1,26 @@
+User-agent: *
+Allow: /
+Allow: /courses
+Allow: /features
+Allow: /pricing
+Allow: /testimonials
+Allow: /roadmaps
+
+# Protected routes - don't index
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /checkout
+Disallow: /checkout/*
+Disallow: /profile
+Disallow: /signin
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /confirm-password
+
+# Sitemap location
+Sitemap: https://upskill.id/sitemap.xml
+
+# Crawl delay (optional, be nice to servers)
+Crawl-delay: 1
